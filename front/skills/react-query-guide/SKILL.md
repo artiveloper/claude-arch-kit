@@ -46,6 +46,27 @@ apps/admin/src/domain/{feature}/
 
 ---
 
+## 1-1. 복잡도별 적용 범위 (풀세트 여부 판단)
+
+모든 feature에 `queries/hooks/actions/validations` 풀세트를 기계적으로 만들지 않는다. 신규 feature마다 아래 기준으로 먼저 적용 범위를 판단한다:
+
+```
+신규 기능 추가 → 읽기 전용인가?
+                     ↓ Yes: queries/ (keys+options+prefetch) + hooks/(useQuery)만. actions/validations 생략
+                     ↓ No: 서버 상태 변경(mutation)이 있는가?
+                              ↓ 단순 CRUD, 인증/소유권 등 비즈니스 룰 없음: + actions/(ActionResult) + validations/(Zod)
+                              ↓ 인증·소유권·쿼터 등 비즈니스 룰 있음, 또는 재사용 필요: 위 전체 + 5-1절(순수 로직 분리) + 4절(낙관적 업데이트) 적용
+```
+
+예:
+- `plans`(목록 조회만) → `queries/` + `hooks/`. `actions/`/`validations/` 불필요.
+- `games`(CRUD, 특별한 룰 없음) → 풀세트, 5절 기본 패턴으로 충분.
+- `servers`(전원 제어 = 상태 규칙 + Realtime) → 풀세트 + 5-1절 + 4절 낙관적 업데이트 필수.
+
+빈 `actions/`·`validations/` 폴더를 미리 만들어두는 것은 과설계다 — 쓰기 기능이 실제로 추가될 때 그 시점에 만든다.
+
+---
+
 ## 2. Query Keys & Options
 
 ```ts
@@ -199,6 +220,40 @@ export async function createGame(input: CreateGameInput): Promise<ActionResult<G
 
 ---
 
+## 5-1. 순수 로직 분리 (재사용성·테스트 용이성)
+
+1-1절 🔴 tier(비즈니스 룰 있음) 또는 API route·cron job·유닛 테스트에서 재사용이 실제로 필요한 액션은, 파일 상단 `'use server'` 대신 **함수 단위 `'use server'`**로 좁혀서 순수 로직과 Server Action 진입점을 분리한다.
+
+```ts
+// {feature}.actions.ts
+
+// 순수 로직 — 'use server' 없음. API route/cron/유닛 테스트에서 직접 import해 재사용 가능
+export async function createGame(input: CreateGameInput): Promise<ActionResult<Game>> {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('로그인이 필요합니다.')
+
+  try {
+    const { data, error } = await supabase.from('games').insert(input).select().single()
+    if (error) return { success: false, error: '게임 추가 실패' }
+    return { success: true, data: toGame(data) }
+  } catch {
+    return { success: false, error: '서버 오류가 발생했습니다.' }
+  }
+}
+
+// Server Action 진입점 — 폼/useMutation이 호출하는 얇은 wrapper만 'use server'
+export async function createGameAction(input: CreateGameInput) {
+  'use server'
+  return createGame(input)
+}
+```
+
+- `hooks/`의 `mutationFn`은 wrapper(`createGameAction`)를 호출한다. 순수 함수(`createGame`)를 클라이언트에서 직접 참조하지 않는다.
+- 단순 CRUD·재사용 계획 없는 액션까지 전부 이렇게 분리하지 않는다 — 5절 기본 패턴(파일 상단 `'use server'`)으로 충분하면 그대로 둔다.
+
+---
+
 ## 6. Supabase Realtime + React Query
 
 ```ts
@@ -261,6 +316,7 @@ export function useServerRealtime(serverId: string) {
 
 ## 9. 구현 순서
 
+0. 적용 범위 판단(1-1절) — 이 feature에 어떤 하위 폴더가 실제로 필요한지 먼저 결정
 1. `lib/react-query/` — `getQueryClient`, `runPrefetch`, `QueryProvider`
 2. `domain/{feature}/queries/` — keys → options → prefetch
 3. `domain/{feature}/actions/` — Server Actions (ActionResult 패턴)
@@ -289,7 +345,8 @@ export function useServerRealtime(serverId: string) {
 ### 신규 feature 추가 절차 (feature 단위)
 
 ```
-1. domain/{feature}/ 레이어 생성 (query-keys/options/prefetch/hooks/actions)
+0. 적용 범위 판단(1-1절) — 읽기 전용이면 queries/hooks만, 쓰기 있으면 actions/validations 추가
+1. domain/{feature}/ 레이어 생성 (판단된 범위만큼: query-keys/options/prefetch/hooks/actions)
 2. page.tsx (Server Component): runPrefetch + HydrationBoundary
 3. {feature}-client.tsx: useQuery(...QueryOptions.list()) — initialData props 없음
 4. mutation: useMutation + invalidateQueries (router.refresh 금지)
