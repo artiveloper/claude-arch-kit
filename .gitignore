@@ -1,0 +1,5 @@
+# Serena MCP 로컬 메타데이터
+.serena/
+
+# Claude Code 로컬 설정 (머신별)
+.claude/settings.local.json
