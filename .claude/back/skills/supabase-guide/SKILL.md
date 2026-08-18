@@ -3,8 +3,9 @@ name: supabase-guide
 description: >
   GamePot Next.js + Supabase 실무 가이드.
   Supabase, SSR 인증, @supabase/ssr, RLS, Row Level Security, 타입 생성,
-  publishable key, service_role, middleware, 마이그레이션 관련 작업 시 참조.
+  publishable key, secret key, API 키 마이그레이션, middleware, DB 마이그레이션 관련 작업 시 참조.
   클라이언트 설정, 인증 패턴(getUser vs getSession), RLS 성능 최적화, 보안 규칙 포함.
+  레거시 anon/service_role 키 대신 신규 publishable/secret 키 사용 원칙 포함.
   GamePot 특화: admin role(app_metadata), Pterodactyl 키 보호, server_action_logs RLS.
 ---
 
@@ -78,7 +79,7 @@ import type { Database } from '@gamepot/db'
 export function createSupabaseAdminClient() {
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.SUPABASE_SECRET_KEY!,
     {
       auth: { autoRefreshToken: false, persistSession: false },
     }
@@ -178,10 +179,48 @@ export const config = {
 
 ## 3. API 키 관리
 
+> 원칙: **레거시 `anon` / `service_role` (JWT) 키는 사용하지 않는다.**
+> 항상 신규 **Publishable / Secret** 키를 사용한다.
+
+### 레거시 키 vs 신규 키
+
+| 구분 | 레거시 — 사용 금지 | 신규 — 사용 |
+|------|------------------|-------------|
+| 공개용 | `anon` (JWT, `eyJ...`) | **Publishable** (`sb_publishable_...`) |
+| 서버용 | `service_role` (JWT, `eyJ...`) | **Secret** (`sb_secret_...`) |
+| 형식 | JWT — 디코딩 시 project ref/exp 등 노출 | 불투명 문자열 |
+| 개별 폐기 | 불가 (JWT secret 교체 = 전체 키 동시 무효화) | 가능 (키 단위 생성/삭제) |
+| 다중 발급 | 불가 (각각 1개 고정) | Secret 키 다중 발급 (서비스/환경별 분리) |
+| 유출 대응 | 전체 롤오버 필요 → 전 서비스 다운타임 | 해당 키만 삭제 후 재발급 |
+| 상태 | **2026년 말 deprecated 예정** | 표준 |
+
+- 레거시 키는 대시보드에서 명시적으로 disable 하기 전까지 계속 동작한다 → 마이그레이션 기간 동안 병행 가능.
+- 신규 키를 발급해도 레거시 키는 자동 폐기되지 않는다. 교체 완료 후 **직접 disable** 해야 한다.
+
+### `anon` 키 vs `anon` 역할 — 혼동 주의
+
+- **`anon` 키**(레거시 API 키) → 폐기 대상. `sb_publishable_...` 로 교체.
+- **`anon` 역할**(Postgres role) → 그대로 존재. Publishable 키로 접근하되 로그인 세션이 없으면 여전히 `anon` 역할로 매핑된다.
+- 따라서 키를 교체해도 RLS 정책의 `TO authenticated` / `TO anon` 구분은 그대로 유지된다.
+
+### 발급 / 교체 절차
+
+1. Dashboard → Project Settings → **API Keys** 탭에서 Publishable / Secret 키 생성
+2. 클라이언트(브라우저·SSR)에는 Publishable 키만 주입
+3. 서버 전용 경로(Server Action / Route Handler / Edge Function)에만 Secret 키 주입
+4. 전 환경(local / staging / production, CI Secrets, Vercel 환경변수)에서 레거시 키 참조 제거
+   — **변수명까지 함께 교체한다.** `SUPABASE_SERVICE_ROLE_KEY` 가 남아 있으면 언젠가 레거시 키가 다시 주입된다.
+5. 레거시 키 사용량 0 확인 후 대시보드에서 legacy keys **disable**
+
+> Secret 키 삭제는 되돌릴 수 없다. 삭제 전 대체 키로 배포가 완료됐는지 확인한다.
+> 유출 시에는 재발급 → 배포 → 기존 키 삭제. 다른 Secret 키에는 영향이 없다.
+
+### 환경변수
+
 | 키 | 용도 | 노출 |
 |----|------|------|
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser/SSR 클라이언트 | 공개 OK (RLS가 보호) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Admin 작업, RLS 우회 | 절대 클라이언트 노출 금지 |
+| `SUPABASE_SECRET_KEY` | Admin 작업, RLS 우회 | 절대 클라이언트 노출 금지 |
 | `PTERODACTYL_API_KEY` | Pterodactyl Application API (서버 생성/삭제/조회) | 절대 클라이언트 노출 금지 |
 | `PTERODACTYL_CLIENT_KEY` | Pterodactyl Client API (전원 제어) | 절대 클라이언트 노출 금지 (상세 SSoT: `/pterodactyl-domain`) |
 
@@ -189,12 +228,21 @@ export const config = {
 # .env.local (git 제외)
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
-SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxx
+SUPABASE_SECRET_KEY=sb_secret_xxx
 
 PTERODACTYL_API_URL=https://panel.example.com
 PTERODACTYL_API_KEY=ptla_xxx
 PTERODACTYL_CLIENT_KEY=ptlc_xxx
 ```
+
+```bash
+# ❌ 레거시 — 신규/기존 코드 모두에서 제거 대상
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...
+```
+
+- Secret 키는 여전히 RLS를 우회한다 → `NEXT_PUBLIC_` 접두사를 붙이는 순간 전 데이터가 공개된다. 절대 금지.
+- Publishable 키는 공개돼도 안전하지만, 그 전제는 **모든 테이블에 RLS가 켜져 있다는 것**이다 (→ 4장).
 
 ---
 
@@ -371,8 +419,10 @@ supabase gen types typescript --local > packages/db/src/types/supabase.ts
 ### 보안
 - [ ] public 스키마 모든 테이블 RLS 활성화
 - [ ] SELECT/INSERT/UPDATE/DELETE 정책 각각 설정
-- [ ] `to authenticated` 명시 (anon 차단)
-- [ ] `SUPABASE_SERVICE_ROLE_KEY`, `PTERODACTYL_API_KEY` 서버 전용, git 제외
+- [ ] `to authenticated` 명시 (비로그인 `anon` **역할** 차단 — 레거시 anon 키와 다른 개념)
+- [ ] 레거시 `anon` / `service_role` (JWT) 키 미사용 → Publishable / Secret 키만 사용
+- [ ] `SUPABASE_SECRET_KEY`, `PTERODACTYL_API_KEY` 서버 전용, git 제외 (`NEXT_PUBLIC_` 접두사 금지)
+- [ ] 교체 완료 후 대시보드에서 레거시 키 disable (자동 폐기되지 않음)
 - [ ] `user_metadata`로 인가 처리 금지 → `app_metadata` 사용
 - [ ] 서버에서 `getSession()` 사용 금지 → `getUser()` 사용
 
