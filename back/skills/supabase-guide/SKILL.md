@@ -1,15 +1,15 @@
 ---
 name: supabase-guide
 description: >
-  GamePot Next.js + Supabase 실무 가이드.
+  Next.js + Supabase 실무 가이드.
   Supabase, SSR 인증, @supabase/ssr, RLS, Row Level Security, 타입 생성,
   publishable key, secret key, API 키 마이그레이션, middleware, DB 마이그레이션 관련 작업 시 참조.
   클라이언트 설정, 인증 패턴(getUser vs getSession), RLS 성능 최적화, 보안 규칙 포함.
   레거시 anon/service_role 키 대신 신규 publishable/secret 키 사용 원칙 포함.
-  GamePot 특화: admin role(app_metadata), Pterodactyl 키 보호, server_action_logs RLS.
+  admin role(app_metadata) 기반 권한 분기, 소유자 기반 RLS 패턴 포함.
 ---
 
-# GamePot Supabase 가이드
+# Supabase 가이드
 
 > 원칙: DB는 항상 RLS로 보호한다. 클라이언트는 절대 신뢰하지 않는다.
 
@@ -26,9 +26,9 @@ pnpm add @supabase/supabase-js @supabase/ssr
 ### Browser Client (Client Component용)
 
 ```ts
-// apps/admin/src/lib/supabase/client.ts
+// src/lib/supabase/client.ts
 import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '@gamepot/db'
+import type { Database } from '@/types/database'
 
 export function createClient() {
   return createBrowserClient<Database>(
@@ -41,10 +41,10 @@ export function createClient() {
 ### Server Client (Server Component / Server Action / Route Handler용)
 
 ```ts
-// apps/admin/src/lib/supabase/server.ts
+// src/lib/supabase/server.ts
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import type { Database } from '@gamepot/db'
+import type { Database } from '@/types/database'
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies()
@@ -72,9 +72,9 @@ export async function createSupabaseServerClient() {
 ### Admin Client (서버 전용 — RLS 우회)
 
 ```ts
-// apps/admin/src/lib/supabase/admin.ts
+// src/lib/supabase/admin.ts
 import { createClient } from '@supabase/supabase-js'  // ← @supabase/ssr 아님
-import type { Database } from '@gamepot/db'
+import type { Database } from '@/types/database'
 
 export function createSupabaseAdminClient() {
   return createClient<Database>(
@@ -119,7 +119,7 @@ const role = user?.user_metadata?.role
 ### requireAdmin 헬퍼
 
 ```ts
-// apps/admin/src/lib/supabase/server.ts
+// src/lib/supabase/server.ts
 export async function requireAdmin() {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -134,7 +134,7 @@ export async function requireAdmin() {
 토큰은 middleware에서 반드시 갱신해야 한다. 누락 시 Server Component에서 세션 만료.
 
 ```ts
-// apps/admin/src/middleware.ts
+// src/middleware.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -221,18 +221,12 @@ export const config = {
 |----|------|------|
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser/SSR 클라이언트 | 공개 OK (RLS가 보호) |
 | `SUPABASE_SECRET_KEY` | Admin 작업, RLS 우회 | 절대 클라이언트 노출 금지 |
-| `PTERODACTYL_API_KEY` | Pterodactyl Application API (서버 생성/삭제/조회) | 절대 클라이언트 노출 금지 |
-| `PTERODACTYL_CLIENT_KEY` | Pterodactyl Client API (전원 제어) | 절대 클라이언트 노출 금지 (상세 SSoT: `/pterodactyl-domain`) |
 
 ```bash
 # .env.local (git 제외)
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
 SUPABASE_SECRET_KEY=sb_secret_xxx
-
-PTERODACTYL_API_URL=https://panel.example.com
-PTERODACTYL_API_KEY=ptla_xxx
-PTERODACTYL_CLIENT_KEY=ptlc_xxx
 ```
 
 ```bash
@@ -254,7 +248,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...
 
 ```sql
 -- 테이블 생성 후 항상 실행
-ALTER TABLE public.game_servers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.resources ENABLE ROW LEVEL SECURITY;
 -- RLS 활성화 + 정책 없음 = 완전 차단 (안전한 기본값)
 ```
 
@@ -277,63 +271,63 @@ USING ((select auth.uid()) = user_id)
 | UPDATE | ✅ (기존 행) | ✅ (새 값) |
 | DELETE | ✅ | ❌ |
 
-### GamePot RLS 패턴
+### RLS 패턴 (소유자 기반)
 
-**game_servers (핵심):**
+**resources (소유자 기반 — 핵심):**
 ```sql
-ALTER TABLE game_servers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resources ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "users_select_own_servers" ON game_servers
+CREATE POLICY "users_select_own_resources" ON resources
   FOR SELECT TO authenticated
   USING ((select auth.uid()) = user_id);
 
-CREATE POLICY "users_insert_own_servers" ON game_servers
+CREATE POLICY "users_insert_own_resources" ON resources
   FOR INSERT TO authenticated
   WITH CHECK ((select auth.uid()) = user_id);
 
-CREATE POLICY "users_update_own_servers" ON game_servers
+CREATE POLICY "users_update_own_resources" ON resources
   FOR UPDATE TO authenticated
   USING ((select auth.uid()) = user_id)
   WITH CHECK ((select auth.uid()) = user_id);
 
-CREATE POLICY "users_delete_own_servers" ON game_servers
+CREATE POLICY "users_delete_own_resources" ON resources
   FOR DELETE TO authenticated
   USING ((select auth.uid()) = user_id);
 
 -- admin: app_metadata.role 기반 (user_metadata 금지)
-CREATE POLICY "admin_full_access_servers" ON game_servers
+CREATE POLICY "admin_full_access_resources" ON resources
   FOR ALL TO authenticated
   USING ((select auth.jwt()->'app_metadata'->>'role') = 'admin');
 ```
 
-**server_action_logs (서버 소유자 기반):**
+**resource_logs (부모 소유자 기반):**
 ```sql
-ALTER TABLE server_action_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resource_logs ENABLE ROW LEVEL SECURITY;
 
 -- ✅ 최적화된 서브쿼리 방향
-CREATE POLICY "users_own_server_logs" ON server_action_logs
+CREATE POLICY "users_own_resource_logs" ON resource_logs
   FOR SELECT TO authenticated
   USING (
-    server_id IN (
-      SELECT id FROM game_servers
+    resource_id IN (
+      SELECT id FROM resources
       WHERE user_id = (select auth.uid())
     )
   );
 
-CREATE POLICY "admin_full_access_logs" ON server_action_logs
+CREATE POLICY "admin_full_access_logs" ON resource_logs
   FOR ALL TO authenticated
   USING ((select auth.jwt()->'app_metadata'->>'role') = 'admin');
 ```
 
-**games, hosting_plans (공개 읽기 + admin 쓰기):**
+**catalog_items (공개 읽기 + admin 쓰기):**
 ```sql
-ALTER TABLE games ENABLE ROW LEVEL SECURITY;
+ALTER TABLE catalog_items ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "public_read_games" ON games
+CREATE POLICY "public_read_catalog" ON catalog_items
   FOR SELECT TO authenticated
   USING (is_active = true);
 
-CREATE POLICY "admin_manage_games" ON games
+CREATE POLICY "admin_manage_catalog" ON catalog_items
   FOR ALL TO authenticated
   USING ((select auth.jwt()->'app_metadata'->>'role') = 'admin');
 ```
@@ -342,23 +336,23 @@ CREATE POLICY "admin_manage_games" ON games
 
 ```sql
 -- 정책에서 사용하는 컬럼은 반드시 인덱스
-CREATE INDEX ix_game_servers_user_id ON game_servers (user_id);
-CREATE INDEX ix_server_action_logs_server_id ON server_action_logs (server_id);
+CREATE INDEX ix_resources_user_id ON resources (user_id);
+CREATE INDEX ix_resource_logs_resource_id ON resource_logs (resource_id);
 CREATE INDEX ix_subscriptions_user_id ON subscriptions (user_id);
 ```
 
 ### Security Definer 함수 (복잡한 권한 체크)
 
 ```sql
-CREATE OR REPLACE FUNCTION public.is_server_owner(p_server_id uuid)
+CREATE OR REPLACE FUNCTION public.is_resource_owner(p_resource_id uuid)
 RETURNS boolean
 LANGUAGE sql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
   SELECT EXISTS(
-    SELECT 1 FROM public.game_servers
-    WHERE id = p_server_id
+    SELECT 1 FROM public.resources
+    WHERE id = p_resource_id
       AND user_id = (SELECT auth.uid())
   );
 $$;
@@ -373,7 +367,7 @@ JOIN pg_class c ON c.relname = t.tablename
 WHERE t.schemaname = 'public' AND c.relrowsecurity = false;
 
 -- 테이블 정책 확인
-SELECT * FROM pg_policies WHERE tablename = 'game_servers';
+SELECT * FROM pg_policies WHERE tablename = 'resources';
 ```
 
 ---
@@ -382,10 +376,10 @@ SELECT * FROM pg_policies WHERE tablename = 'game_servers';
 
 ```bash
 # 로컬 Supabase에서 생성
-supabase gen types typescript --local > packages/db/src/types/supabase.ts
+supabase gen types typescript --local > src/types/database.ts
 
 # 원격 프로젝트에서 생성
-supabase gen types typescript --project-id <project-id> > packages/db/src/types/supabase.ts
+supabase gen types typescript --project-id <project-id> > src/types/database.ts
 ```
 
 스키마 변경 시 반드시 재생성. CI에 타입 생성 + 커밋 체크 추가 권장.
@@ -406,7 +400,7 @@ supabase db push           # 로컬
 supabase db push --linked  # 원격 (주의)
 
 # 타입 재생성
-supabase gen types typescript --local > packages/db/src/types/supabase.ts
+supabase gen types typescript --local > src/types/database.ts
 ```
 
 - `supabase/migrations/` 는 git 커밋
@@ -421,13 +415,13 @@ supabase gen types typescript --local > packages/db/src/types/supabase.ts
 - [ ] SELECT/INSERT/UPDATE/DELETE 정책 각각 설정
 - [ ] `to authenticated` 명시 (비로그인 `anon` **역할** 차단 — 레거시 anon 키와 다른 개념)
 - [ ] 레거시 `anon` / `service_role` (JWT) 키 미사용 → Publishable / Secret 키만 사용
-- [ ] `SUPABASE_SECRET_KEY`, `PTERODACTYL_API_KEY` 서버 전용, git 제외 (`NEXT_PUBLIC_` 접두사 금지)
+- [ ] `SUPABASE_SECRET_KEY` 서버 전용, git 제외 (`NEXT_PUBLIC_` 접두사 금지)
 - [ ] 교체 완료 후 대시보드에서 레거시 키 disable (자동 폐기되지 않음)
 - [ ] `user_metadata`로 인가 처리 금지 → `app_metadata` 사용
 - [ ] 서버에서 `getSession()` 사용 금지 → `getUser()` 사용
 
 ### 성능
-- [ ] 정책 컬럼 인덱스 추가 (user_id, server_id 등)
+- [ ] 정책 컬럼 인덱스 추가 (user_id, resource_id 등)
 - [ ] `auth.uid()` → `(select auth.uid())` 래핑
 - [ ] 복잡한 권한 체크는 security definer 함수로 분리
 

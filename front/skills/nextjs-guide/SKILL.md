@@ -1,7 +1,7 @@
 ---
 name: nextjs-guide
 description: >
-  GamePot Next.js App Router 메커니즘 SSoT.
+  Next.js App Router 메커니즘 가이드.
   파일 컨벤션(page/layout/loading/error), Server vs Client Component 경계,
   route group, 라우트 레벨 로딩(loading.tsx + Suspense 스트리밍), prefetch/HydrationBoundary 배치.
   Next.js, App Router, Server Component, Client Component, 'use client', loading.tsx, Suspense,
@@ -18,7 +18,7 @@ description: >
 ## 1. App Router 파일 컨벤션
 
 ```
-apps/admin/src/app/(dashboard)/
+src/app/(dashboard)/
 ├── layout.tsx                  — 공유 레이아웃 (Server Component)
 ├── loading.tsx                 — 대시보드 홈 라우트 로딩
 ├── servers/
@@ -65,7 +65,7 @@ export default async function ServersPage() {
 
 ```tsx
 // app/(dashboard)/servers/loading.tsx
-import { Skeleton } from '@workspace/ui/components/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TableSkeleton, PageHeaderSkeleton } from '@/components/ui/skeletons';  // ← shadcn-ui
 
 export default function ServersLoading() {

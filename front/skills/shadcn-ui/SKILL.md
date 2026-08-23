@@ -1,7 +1,7 @@
 ---
 name: shadcn-ui
 description: >
-  GamePot Tailwind/shadcn UI 구현 패턴 SSoT. 프리미티브는 Base UI(@base-ui/react) 기준.
+  Tailwind/shadcn UI 구현 패턴 가이드. 프리미티브는 Base UI(@base-ui/react) 기준.
   모바일 퍼스트 className 규칙, Base UI 합성(render prop)·data-* 상태 스타일링, shadcn Sidebar 레이아웃,
   컴포넌트 패턴 — 전원 제어 버튼(Button), 상태 Badge, KST 날짜·시간 포맷, 리스트 Client Component, 공유 스켈레톤 컴포넌트.
   Next.js App Router 메커니즘은 nextjs-guide, 데이터 레이어는 react-query-guide 참조.
@@ -42,7 +42,7 @@ dashboard layout은 `SidebarProvider` + `SidebarInset` + `AppSidebar` 조합을 
 
 ```tsx
 // app/(dashboard)/layout.tsx  ← layout.tsx 파일 컨벤션은 nextjs-guide
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@workspace/ui/components/sidebar'
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 
 export default function DashboardLayout({ children }) {
@@ -105,7 +105,7 @@ export default function DashboardLayout({ children }) {
 
 ## 1. 프리미티브 레이어 — Base UI (`@base-ui/react`)
 
-shadcn 컴포넌트(`@workspace/ui/components/*`)의 내부 프리미티브는 **Base UI**다. 프리미티브를 직접 다뤄야 할 때(커스텀 팝업·합성·상태 스타일링)는 아래 규칙을 따른다.
+shadcn 컴포넌트(`@/components/ui/*`)의 내부 프리미티브는 **Base UI**다. 프리미티브를 직접 다뤄야 할 때(커스텀 팝업·합성·상태 스타일링)는 아래 규칙을 따른다.
 
 ### 패키지 & import
 
@@ -249,7 +249,7 @@ export function PowerControls({ serverId, status }: { serverId: string; status: 
 
 ### 상태 Badge
 
-> 상태 → 라벨/색상 중앙 매핑·색상 단독 의존 금지 원칙은 `design-system` 스킬 참조. 아래는 GamePot 상태값에 대한 구체 매핑.
+> 상태 → 라벨/색상 중앙 매핑·색상 단독 의존 금지 원칙은 `design-system` 스킬 참조. 아래는 구체 매핑 예시(리소스 상태값).
 
 ```tsx
 const statusConfig: Record<ServerStatus, { label: string; variant: string }> = {
@@ -301,7 +301,7 @@ export function ServerTableClient() {
 로딩 UI는 화면마다 새로 만들지 말고 `components/ui/skeletons.tsx`의 공유 컴포넌트를 재사용한다. 라우트 레벨 로딩(`loading.tsx`)에서의 조합·배치는 → `nextjs-guide`.
 
 ```
-apps/admin/src/components/ui/skeletons.tsx  ← 공유 스켈레톤 컴포넌트
+src/components/ui/skeletons.tsx  ← 공유 스켈레톤 컴포넌트
 ```
 
 | 컴포넌트 | 용도 |

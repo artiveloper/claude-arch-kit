@@ -1,7 +1,7 @@
 ---
 name: react-query-guide
 description: >
-  GamePot React Query 데이터 레이어 SSoT.
+  React Query 데이터 레이어 가이드.
   도메인 디렉토리 구조, query keys/options/prefetch, useMutation + invalidateQueries/낙관적 업데이트,
   Server Actions(ActionResult), Supabase Realtime + setQueryData, 캐시 레이어·상태 소유권, 마이그레이션 완료 기준.
   React Query, query key, query options, prefetch, mutation, invalidate, 낙관적 업데이트, Realtime,
@@ -10,16 +10,15 @@ description: >
 
 # React Query — 데이터 레이어 패턴
 
-> UI/컴포넌트/Tailwind·shadcn 구현 → `server-ui` 스킬 참조
+> UI/컴포넌트/Tailwind·shadcn 구현 → `shadcn-ui` 스킬 참조
 > Supabase 클라이언트/RLS/인증 → `supabase-guide` 스킬 참조
-> Pterodactyl API 패턴 → `pterodactyl-domain` 스킬 참조
 
 ---
 
 ## 1. 도메인 디렉토리 구조 (필수)
 
 ```
-apps/admin/src/domain/{feature}/
+src/domain/{feature}/
 ├── index.ts                    — public API (전체 re-export)
 ├── types/
 │   ├── index.ts
@@ -264,7 +263,7 @@ export function useServerRealtime(serverId: string) {
     const sub = supabase
       .channel(`server:${serverId}`)
       .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'game_servers', filter: `id=eq.${serverId}` },
+        { event: 'UPDATE', schema: 'public', table: 'servers', filter: `id=eq.${serverId}` },
         (payload) => {
           queryClient.setQueryData(serverQueryKeys.detail(serverId), toGameServer(payload.new))
           queryClient.invalidateQueries({ queryKey: serverQueryKeys.list() })
@@ -293,9 +292,9 @@ export function useServerRealtime(serverId: string) {
 | 상태 유형 | 도구 | 비고 |
 |----------|------|------|
 | 서버 데이터 | **React Query** | 캐싱·invalidate·낙관적 업데이트. 모든 서버 상태의 단일 출처 |
-| URL 상태 (필터·정렬·페이지네이션·탭) | **nuqs** (현재 미설치) | 목록 페이지(servers·games·plans·users)의 필터/페이지는 nuqs로 URL에 동기화 — 공유·새로고침·뒤로가기 보존. **도입 시 적용하는 규칙** |
+| URL 상태 (필터·정렬·페이지네이션·탭) | **nuqs** | 목록 페이지의 필터/페이지는 URL에 동기화 — 공유·새로고침·뒤로가기 보존 |
 | 로컬 UI 상태 | `useState`/`useReducer` | 한 컴포넌트 내부(모달 open, 입력값 등) |
-| 전역 클라이언트 상태 | **현재 미도입 (Zustand 보류)** | 아래 기준 충족 전까지 도입 금지 |
+| 전역 클라이언트 상태 | **Zustand 등 (기본 보류)** | 아래 기준 충족 전까지 도입하지 않는다 |
 
 **판단 흐름:** 서버 데이터? → React Query / URL에서 복원해야 하나(필터·페이지)? → nuqs / 한 컴포넌트 내부? → useState.
 
@@ -323,26 +322,11 @@ export function useServerRealtime(serverId: string) {
 4. `domain/{feature}/hooks/` — `useQuery` / `useMutation` 래퍼
 5. `domain/{feature}/index.ts` — public API re-export
 6. Page (Server Component) — `runPrefetch` + `HydrationBoundary`
-7. Client Components — hooks 사용, UI만 담당 (→ UI 구현은 `server-ui` 스킬)
+7. Client Components — hooks 사용, UI만 담당 (→ UI 구현은 `shadcn-ui` 스킬)
 
 ---
 
-## 10. 마이그레이션 완료 — 패턴 레퍼런스
-
-> ✅ GamePot 코드는 **React Query 전환 완료** 상태다 (`@tanstack/react-query` 설치됨, `domain/{servers,games,plans}` 구축됨). 아래는 신규 feature 작성 시 따라야 할 **완료 사례**다.
-> UI 컴포넌트는 `@workspace/ui` 패키지에서 import한다 (예: `@workspace/ui/components/button`).
-
-### 완료된 화면 (참고 레퍼런스)
-
-| 파일 | 적용 패턴 |
-|------|----------|
-| `(dashboard)/games/{page,games-client}.tsx` | `runPrefetch`+`HydrationBoundary` → `useGames()` / `useCreateGame()` / `useUpdateGame()` |
-| `(dashboard)/plans/{page,plans-client}.tsx` | `usePlans()` / `useCreatePlan()` / `useUpdatePlan()` |
-| `(dashboard)/servers/page.tsx` + `components/servers/server-table.tsx` | `serverPrefetch.list(filters)` → `useServers()` + `useServerRealtime()` (Supabase Realtime) |
-
-데이터용 `router.refresh()`는 코드에서 제거됨 (잔존 2곳은 로그인/로그아웃 세션 갱신 — 정상).
-
-### 신규 feature 추가 절차 (feature 단위)
+## 10. 신규 feature 추가 절차
 
 ```
 0. 적용 범위 판단(1-1절) — 읽기 전용이면 queries/hooks만, 쓰기 있으면 actions/validations 추가
@@ -350,8 +334,11 @@ export function useServerRealtime(serverId: string) {
 2. page.tsx (Server Component): runPrefetch + HydrationBoundary
 3. {feature}-client.tsx: useQuery(...QueryOptions.list()) — initialData props 없음
 4. mutation: useMutation + invalidateQueries (router.refresh 금지)
-5. 실시간 필요 시: use-server-realtime.ts 패턴(Supabase Realtime → setQueriesData) 참고
+5. 실시간 필요 시: use-{feature}-realtime.ts 패턴(Supabase Realtime → setQueriesData) 참고
 ```
 
-> **미구축:** `users`는 페이지만 있고 도메인 레이어가 없다 — 위 절차의 1순위 적용 대상.
-> code-reviewer는 모든 코드에 RQ 규칙을 적용한다 (legacy 예외 없음 — 마이그레이션이 끝났으므로).
+### 기존 코드베이스에 도입할 때
+
+- 데이터 로딩용 `router.refresh()`는 제거 대상이다 — 서버 상태 갱신은 `invalidateQueries`가 담당한다. 세션 갱신(로그인/로그아웃)용 `router.refresh()`는 남겨둔다.
+- feature 단위로 전환하고, 전환이 끝난 feature부터 위 규칙을 예외 없이 적용한다. 전환 중인 코드와 완료된 코드에 같은 잣대를 들이대면 리뷰가 마비된다 — 완료 여부를 feature 단위로 명시한다.
+- 페이지만 있고 도메인 레이어가 없는 화면이 남아 있다면 그게 다음 전환 대상이다.
