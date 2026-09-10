@@ -1,0 +1,8 @@
+{
+  "name": "common-kit",
+  "displayName": "Common Kit — 시스템 아키텍처",
+  "description": "요구사항(FR/NFR) 구조화, 규모별 기술 스택 선정 규율, KISS·확장 지점, 도메인 간 경계 조율.",
+  "author": { "name": "artiveloper", "email": "artiveloper@gmail.com" },
+  "repository": "https://github.com/artiveloper/ai-guide",
+  "keywords": ["architecture", "system-design", "review"]
+}

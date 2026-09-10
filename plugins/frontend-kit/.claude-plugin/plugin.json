@@ -1,0 +1,8 @@
+{
+  "name": "frontend-kit",
+  "displayName": "Frontend Kit — 프론트엔드·디자인 시스템·QA",
+  "description": "프론트엔드 아키텍처(상태 분류, 컴포넌트 경계, 데이터 fetching), 디자인 시스템(토큰·접근성), 프론트엔드 테스트 전략. Next.js·React Query·shadcn/Base UI 기술 스킬 포함.",
+  "author": { "name": "artiveloper", "email": "artiveloper@gmail.com" },
+  "repository": "https://github.com/artiveloper/ai-guide",
+  "keywords": ["frontend", "nextjs", "react-query", "shadcn", "design-system", "testing", "review"]
+}
