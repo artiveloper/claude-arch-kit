@@ -22,9 +22,9 @@
       "name": "backend-kit",
       "source": "./plugins/backend-kit",
       "displayName": "Backend Kit — 백엔드·DB·QA",
-      "description": "계층 분리, API 계약, 트랜잭션 경계, 인덱스·마이그레이션, 통합 테스트 전략. Python·Supabase 기술 스킬 포함.",
+      "description": "계층 분리, API 계약, 트랜잭션 경계, 인덱스·마이그레이션, 통합 테스트 전략. Python 클린코드 기술 스킬 포함.",
       "category": "architecture",
-      "tags": ["backend", "database", "python", "supabase", "testing", "review"]
+      "tags": ["backend", "database", "python", "testing", "review"]
     },
     {
       "name": "frontend-kit",
@@ -33,6 +33,14 @@
       "description": "상태 분류, 컴포넌트 경계, 데이터 fetching, 디자인 토큰·접근성, 행동 기반 테스트. Next.js·React Query·shadcn/Base UI 기술 스킬 포함.",
       "category": "architecture",
       "tags": ["frontend", "nextjs", "react-query", "shadcn", "design-system", "testing", "review"]
+    },
+    {
+      "name": "supabase-kit",
+      "source": "./plugins/supabase-kit",
+      "displayName": "Supabase Kit — 인증·RLS·키 관리",
+      "description": "@supabase/ssr 클라이언트, getUser vs getSession, RLS 정책·성능, publishable/secret 신규 API 키, 타입 생성, 마이그레이션. 인증 예시는 Next.js App Router 기준.",
+      "category": "backend",
+      "tags": ["supabase", "rls", "auth", "postgres", "nextjs"]
     }
   ]
 }

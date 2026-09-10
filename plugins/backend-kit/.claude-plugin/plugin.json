@@ -1,8 +1,8 @@
 {
   "name": "backend-kit",
   "displayName": "Backend Kit — 백엔드·DB·QA",
-  "description": "백엔드 아키텍처(계층 분리, API 계약, 트랜잭션 경계), DB 설계(정규화·인덱스·마이그레이션), 백엔드 테스트 전략. Python 클린코드·Supabase 기술 스킬 포함.",
+  "description": "백엔드 아키텍처(계층 분리, API 계약, 트랜잭션 경계), DB 설계(정규화·인덱스·마이그레이션), 백엔드 테스트 전략. Python 클린코드 기술 스킬 포함. 스택 불문 원칙 중심.",
   "author": { "name": "artiveloper", "email": "artiveloper@gmail.com" },
   "repository": "https://github.com/artiveloper/claude-arch-kit",
-  "keywords": ["backend", "database", "python", "supabase", "testing", "review"]
+  "keywords": ["backend", "database", "python", "testing", "review"]
 }

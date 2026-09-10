@@ -20,7 +20,7 @@ description: >
 ### 패키지
 
 ```bash
-pnpm add @supabase/supabase-js @supabase/ssr
+npm install @supabase/supabase-js @supabase/ssr   # pnpm/yarn/bun 등 프로젝트가 쓰는 패키지 매니저로 실행
 ```
 
 ### Browser Client (Client Component용)
@@ -192,7 +192,7 @@ export const config = {
 | 개별 폐기 | 불가 (JWT secret 교체 = 전체 키 동시 무효화) | 가능 (키 단위 생성/삭제) |
 | 다중 발급 | 불가 (각각 1개 고정) | Secret 키 다중 발급 (서비스/환경별 분리) |
 | 유출 대응 | 전체 롤오버 필요 → 전 서비스 다운타임 | 해당 키만 삭제 후 재발급 |
-| 상태 | **2026년 말 deprecated 예정** | 표준 |
+| 상태 | **deprecated 예정** (폐기 일정은 Supabase 공지 확인) | 표준 |
 
 - 레거시 키는 대시보드에서 명시적으로 disable 하기 전까지 계속 동작한다 → 마이그레이션 기간 동안 병행 가능.
 - 신규 키를 발급해도 레거시 키는 자동 폐기되지 않는다. 교체 완료 후 **직접 disable** 해야 한다.
@@ -335,10 +335,9 @@ CREATE POLICY "admin_manage_catalog" ON catalog_items
 ### 정책 컬럼 인덱싱 (필수)
 
 ```sql
--- 정책에서 사용하는 컬럼은 반드시 인덱스
-CREATE INDEX ix_resources_user_id ON resources (user_id);
-CREATE INDEX ix_resource_logs_resource_id ON resource_logs (resource_id);
-CREATE INDEX ix_subscriptions_user_id ON subscriptions (user_id);
+-- 정책의 USING/WITH CHECK에 등장하는 컬럼은 반드시 인덱스
+CREATE INDEX ix_resources_user_id ON resources (user_id);          -- 소유자 기반 정책
+CREATE INDEX ix_resource_logs_resource_id ON resource_logs (resource_id);  -- 부모 참조 정책
 ```
 
 ### Security Definer 함수 (복잡한 권한 체크)
@@ -393,7 +392,7 @@ supabase init
 supabase start
 
 # 마이그레이션 생성
-supabase migration new add-game-servers-table
+supabase migration new add-resources-table
 
 # 적용
 supabase db push           # 로컬

@@ -5,8 +5,8 @@ description: >
   프로젝트 구조(src layout), 타입 힌트(mypy/pyright), 패키징(uv/poetry, pyproject.toml),
   린팅/포매팅(ruff), 테스트(pytest, fixture, mock 경계), 예외 계층 설계, asyncio 기본 패턴 포함.
   Python, 파이썬, type hint, 타입 힌트, pyproject.toml, ruff, mypy, pytest, asyncio,
-  가상환경, venv 관련 작업이나 코드 리뷰 시 참조. FastAPI/Django 등 특정 프레임워크 실무는
-  별도 기술 스킬(예: fastapi-guide)을 우선 참조하고, 이 스킬은 언어 차원의 공통 기반으로 사용.
+  가상환경, venv 관련 작업이나 코드 리뷰 시 참조. FastAPI/Django 등 프레임워크 전용 스킬이
+  별도로 있으면 그쪽을 우선 참조하고, 이 스킬은 언어 차원의 공통 기반으로 사용.
 ---
 
 # Python 클린코드 가이드

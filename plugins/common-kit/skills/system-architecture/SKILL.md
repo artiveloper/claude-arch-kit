@@ -5,7 +5,7 @@ description: 시스템(상위) 아키텍처 공통 원칙(요구사항 FR/NFR �
 
 # System Architecture
 
-스택 불문 상위(시스템) 설계 판단 기준. 도메인별 세부(백엔드 계층·DB 스키마·프론트 상태 등)는 `backend-architecture`·`db-architecture`·`frontend-architecture` 스킬이 담당하고, 이 스킬은 그 위에서 **요구사항 → 구조 → 스택**을 잇는 판단만 다룬다. 특정 스택 권장(예: Next.js, Prisma)이나 산출물 문서 포맷은 이 스킬에 넣지 않고 프로젝트/기술 스킬에 위임한다.
+스택 불문 상위(시스템) 설계 판단 기준. 도메인별 세부(백엔드 계층·DB 스키마·프론트 상태 등)는 별도 도메인 스킬(`backend-architecture`·`db-architecture`·`frontend-architecture` — 각각 backend-kit/frontend-kit에 있으며 설치되지 않았을 수 있다)이 담당하고, 이 스킬은 그 위에서 **요구사항 → 구조 → 스택**을 잇는 판단만 다룬다. 특정 스택 권장(예: Next.js, Prisma)이나 산출물 문서 포맷은 이 스킬에 넣지 않고 프로젝트/기술 스킬에 위임한다.
 
 ## 요구사항 구조화
 
@@ -35,10 +35,13 @@ description: 시스템(상위) 아키텍처 공통 원칙(요구사항 FR/NFR �
 
 ## 도메인 설계 위임
 
-- API 계약·계층 분리·트랜잭션 경계 → `backend-architecture`
-- 스키마·정규화·인덱스·마이그레이션 → `db-architecture`
-- 상태 분류·컴포넌트 경계·데이터 fetching → `frontend-architecture`
-- 이 스킬은 위 산출물이 요구사항(FR/NFR)과 정합하는지, 도메인 간 경계(누가 무엇을 소유하는지)가 충돌 없는지를 상위에서 점검한다.
+아래 스킬이 설치되어 있으면 해당 판단을 넘기고, 없으면 그 영역은 이 스킬의 범위 밖임을 밝힌 뒤 일반 원칙 수준으로만 다룬다.
+
+- API 계약·계층 분리·트랜잭션 경계 → `backend-architecture` (backend-kit)
+- 스키마·정규화·인덱스·마이그레이션 → `db-architecture` (backend-kit)
+- 상태 분류·컴포넌트 경계·데이터 fetching → `frontend-architecture` (frontend-kit)
+
+이 스킬은 위 산출물이 요구사항(FR/NFR)과 정합하는지, 도메인 간 경계(누가 무엇을 소유하는지)가 충돌 없는지를 상위에서 점검한다.
 
 ## 리뷰 시 체크 우선순위
 

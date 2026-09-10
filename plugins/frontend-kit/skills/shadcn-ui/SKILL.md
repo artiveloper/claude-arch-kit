@@ -3,7 +3,7 @@ name: shadcn-ui
 description: >
   Tailwind/shadcn UI 구현 패턴 가이드. 프리미티브는 Base UI(@base-ui/react) 기준.
   모바일 퍼스트 className 규칙, Base UI 합성(render prop)·data-* 상태 스타일링, shadcn Sidebar 레이아웃,
-  컴포넌트 패턴 — 전원 제어 버튼(Button), 상태 Badge, KST 날짜·시간 포맷, 리스트 Client Component, 공유 스켈레톤 컴포넌트.
+  컴포넌트 패턴 — 액션 버튼(Button), 상태 Badge, 날짜·시간 포맷 중앙화, 리스트 Client Component, 공유 스켈레톤 컴포넌트.
   Next.js App Router 메커니즘은 nextjs-guide, 데이터 레이어는 react-query-guide 참조.
   Tailwind, shadcn, Base UI, render prop, className, Sidebar, Button, Badge, Skeleton, 반응형, UI 컴포넌트 작업 시 참조.
 ---
@@ -11,8 +11,7 @@ description: >
 # shadcn/Tailwind — UI 구현 패턴
 
 > Next.js App Router 메커니즘(Server/Client 경계·loading.tsx·route group) → `nextjs-guide` 스킬 참조
-> 데이터 레이어(React Query·query keys/options·prefetch·mutation·Realtime) → `react-query-guide` 스킬 참조
-> Supabase 클라이언트/RLS/인증 → `supabase-guide` 스킬 참조
+> 데이터 레이어(React Query·query keys/options·prefetch·mutation·실시간 구독) → `react-query-guide` 스킬 참조
 > 라이브러리 불문 UI 원칙(모바일 퍼스트·터치 타겟·반응형·로딩/빈/에러 상태·상태 색상 일관성) → `design-system` 스킬 참조. 이 스킬은 그 원칙들의 **Tailwind/shadcn 구현**만 다룬다.
 
 **프리미티브 기준: Base UI(`@base-ui/react`).** shadcn/ui는 2026-07부터 Base UI가 기본 프리미티브다. 신규 컴포넌트·신규 코드는 Radix가 아니라 Base UI로 작성한다(§1).
@@ -110,7 +109,8 @@ shadcn 컴포넌트(`@/components/ui/*`)의 내부 프리미티브는 **Base UI*
 ### 패키지 & import
 
 ```bash
-pnpm add @base-ui/react          # 단일 패키지 (Radix처럼 컴포넌트별 패키지를 추가하지 않는다)
+npm install @base-ui/react       # 단일 패키지 (Radix처럼 컴포넌트별 패키지를 추가하지 않는다)
+                                 # pnpm/yarn/bun 등 프로젝트가 쓰는 패키지 매니저로 실행
 ```
 
 ```tsx
@@ -118,7 +118,7 @@ import { Dialog } from '@base-ui/react/dialog'      // 서브패스 import
 import { Popover } from '@base-ui/react/popover'
 ```
 
-- shadcn 컴포넌트 추가는 기본값 그대로: `pnpm dlx shadcn add <component>` → Base UI 버전이 설치된다.
+- shadcn 컴포넌트 추가는 기본값 그대로: `npx shadcn add <component>`(또는 `pnpm dlx`/`bunx`) → Base UI 버전이 설치된다.
 - `-b radix` 플래그는 **레거시 유지 목적 외 사용 금지**. 신규 프로젝트/신규 컴포넌트는 Base UI 기본값을 쓴다.
 
 ### 합성 — `asChild` 대신 `render`
@@ -128,7 +128,7 @@ Base UI에는 `asChild`/`Slot`이 없다. 트리거를 다른 엘리먼트/커�
 ```tsx
 // ✅ Base UI
 <Menu.Trigger render={<Button variant="outline" />}>메뉴 열기</Menu.Trigger>
-<Menu.Item render={<Link href="/servers" />}>서버 목록</Menu.Item>
+<Menu.Item render={<Link href="/resources" />}>목록으로</Menu.Item>
 
 // ❌ Radix 시절 패턴 (Base UI에서 동작하지 않음)
 <Menu.Trigger asChild><Button variant="outline">메뉴 열기</Button></Menu.Trigger>
@@ -201,7 +201,7 @@ Base UI는 `data-state="open"` 하나가 아니라 **상태별 개별 속성**�
 ### 기존 Radix 코드 이관
 
 - Radix는 deprecated가 아니다 — **한 번에 갈아엎지 않고 컴포넌트 단위로 점진 이관**한다. 혼재 상태는 허용하되, 신규 코드는 항상 Base UI.
-- 이관은 `pnpm dlx skills add shadcn/ui` 후 `migrate <component> to base-ui` 형태로 컴포넌트별 진행 → `.migration/<component>.md` 리포트에서 동작 차이를 확인하고 커밋을 분리한다.
+- 이관은 `npx skills add shadcn/ui`(또는 `pnpm dlx`/`bunx`) 후 `migrate <component> to base-ui` 형태로 컴포넌트별 진행 → `.migration/<component>.md` 리포트에서 동작 차이를 확인하고 커밋을 분리한다.
 - 이관 후 확인 항목: `asChild` 잔존 여부, `data-[state=...]` 셀렉터 잔존 여부, `side`/`align`이 `Positioner`로 옮겨졌는지, 트리거로 넘긴 컴포넌트의 ref forward + props spread.
 
 ### 금지 패턴
@@ -211,9 +211,9 @@ Base UI는 `data-state="open"` 하나가 아니라 **상태별 개별 속성**�
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 
 // ❌ asChild — Base UI에는 없음
-<Button asChild><Link href="/servers">이동</Link></Button>
+<Button asChild><Link href="/resources">이동</Link></Button>
 // ✅
-<Button render={<Link href="/servers" />}>이동</Button>
+<Button render={<Link href="/resources" />}>이동</Button>
 
 // ❌ Positioner 없이 Popup에 위치 prop
 <Popover.Popup side="bottom" sideOffset={8} />
@@ -223,25 +223,29 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 
 ## 2. 컴포넌트 패턴
 
-> 아래 컴포넌트가 사용하는 `useServerPower`/`useServers` 등 React Query 훅의 정의는 `react-query-guide` 스킬 참조. Server/Client 경계·`'use client'`는 `nextjs-guide` 참조. 이 섹션은 그 훅을 소비하는 **UI 스타일링**만 다룬다.
+> 아래 컴포넌트가 소비하는 데이터 훅(`useResource*` 등)의 정의는 `react-query-guide` 스킬 참조. Server/Client 경계·`'use client'`는 `nextjs-guide` 참조. 이 섹션은 그 훅을 소비하는 **UI 스타일링**만 다룬다.
+> 도메인 이름(`resource`, `status` 값 등)은 자리표시자다 — 프로젝트의 실제 엔티티로 바꿔 읽는다.
 
-### 전원 제어 버튼
+### 상태 전이 액션 버튼
+
+전이 중(`isPending` 또는 중간 상태)에는 **모든 액션을 함께 잠근다.** 개별 버튼만 막으면 연타로 모순된 요청이 나간다.
 
 ```tsx
-// components/power-controls.tsx
+// components/resource-actions.tsx
 'use client'
-export function PowerControls({ serverId, status }: { serverId: string; status: ServerStatus }) {
-  const { mutate, isPending } = useServerPower(serverId)
-  const isTransitioning = status === 'starting' || status === 'stopping'
+export function ResourceActions({ id, status }: { id: string; status: ResourceStatus }) {
+  const { mutate, isPending } = useResourceTransition(id)
+  const isTransitioning = status === 'activating' || status === 'deactivating'
+  const locked = isPending || isTransitioning
 
   return (
     <div className="flex gap-2">
-      <Button onClick={() => mutate('start')}
-        disabled={status !== 'stopped' || isPending || isTransitioning}>시작</Button>
-      <Button variant="destructive" onClick={() => mutate('stop')}
-        disabled={status !== 'running' || isPending || isTransitioning}>중지</Button>
+      <Button onClick={() => mutate('activate')}
+        disabled={status !== 'inactive' || locked}>활성화</Button>
+      <Button variant="destructive" onClick={() => mutate('deactivate')}
+        disabled={status !== 'active' || locked}>비활성화</Button>
       <Button variant="outline" onClick={() => mutate('restart')}
-        disabled={status !== 'running' || isPending || isTransitioning}>재시작</Button>
+        disabled={status !== 'active' || locked}>재시작</Button>
     </div>
   )
 }
@@ -249,65 +253,85 @@ export function PowerControls({ serverId, status }: { serverId: string; status: 
 
 ### 상태 Badge
 
-> 상태 → 라벨/색상 중앙 매핑·색상 단독 의존 금지 원칙은 `design-system` 스킬 참조. 아래는 구체 매핑 예시(리소스 상태값).
+> 상태 → 라벨/색상 중앙 매핑·색상 단독 의존 금지 원칙은 `design-system` 스킬 참조. 아래는 그 구현 형태다.
+
+상태값 집합은 프로젝트마다 다르다 — **중요한 것은 값이 아니라 "한 곳에서 매핑하고 라벨을 반드시 함께 준다"는 형태**다.
 
 ```tsx
-const statusConfig: Record<ServerStatus, { label: string; variant: string }> = {
-  running:      { label: '실행 중', variant: 'success' },
-  stopped:      { label: '중지됨', variant: 'secondary' },
-  starting:     { label: '시작 중', variant: 'warning' },
-  stopping:     { label: '중지 중', variant: 'warning' },
-  provisioning: { label: '프로비저닝', variant: 'default' },
-  suspended:    { label: '정지됨', variant: 'destructive' },
+const statusConfig: Record<ResourceStatus, { label: string; variant: string }> = {
+  active:       { label: '활성', variant: 'success' },
+  inactive:     { label: '비활성', variant: 'secondary' },
+  activating:   { label: '활성화 중', variant: 'warning' },
+  deactivating: { label: '비활성화 중', variant: 'warning' },
+  pending:      { label: '대기', variant: 'default' },
   error:        { label: '오류', variant: 'destructive' },
 }
 ```
 
-### 날짜·시간 포맷 (KST 필수)
+- 이 매핑을 화면마다 다시 선언하지 않는다 — 한 모듈에서 export해 재사용한다.
+- `variant`만 주고 `label`을 생략하지 않는다(색각 이상 사용자 대응).
 
-서비스 대상이 한국이므로 모든 날짜·시간 표시는 `@/lib/format.ts` 유틸을 사용한다.
+### 날짜·시간 포맷 — 중앙 유틸 + 타임존 명시
+
+날짜·시간 포맷을 컴포넌트마다 인라인으로 쓰지 않고 **`@/lib/format.ts` 같은 단일 모듈로 중앙화**한다. 화면마다 포맷이 갈리는 것과, 타임존이 뷰어의 브라우저 설정에 따라 달라지는 것을 동시에 막는다.
+
+```ts
+// src/lib/format.ts — 로케일·타임존은 프로젝트가 한 번 정한다
+const LOCALE = 'ko-KR';
+const TIME_ZONE = 'Asia/Seoul';   // 프로젝트 기준 타임존. 사용자별 타임존이 필요하면 인자로 받는다
+
+export const formatDate = (d: string | Date) =>
+  new Intl.DateTimeFormat(LOCALE, { dateStyle: 'medium', timeZone: TIME_ZONE }).format(new Date(d));
+
+export const formatDateTime = (d: string | Date) =>
+  new Intl.DateTimeFormat(LOCALE, { dateStyle: 'medium', timeStyle: 'short', timeZone: TIME_ZONE }).format(new Date(d));
+```
 
 ```ts
 import { formatDate, formatDateTime } from '@/lib/format';
 
-formatDate(server.createdAt)     // "2026. 06. 28." (KST)
-formatDateTime(server.createdAt) // "2026. 06. 28. 오후 03:00" (KST)
+formatDate(resource.createdAt)      // 중앙 정의된 로케일·타임존으로 렌더
+formatDateTime(resource.createdAt)
 ```
 
-- `new Date(x).toLocaleDateString('ko-KR')` — `timeZone` 누락 형태 금지
-- `toLocaleString('ko-KR')` 숫자 포맷(금액 천단위)은 허용
+- **`timeZone`을 생략한 `toLocaleDateString()`/`toLocaleString()` 직접 호출 금지** — 서버(UTC)와 클라이언트(로컬)의 결과가 달라져 하이드레이션 불일치가 난다.
+- 숫자 포맷(금액 천단위 등)은 `toLocaleString`으로 충분하다 — 타임존과 무관하다.
 
 ### 리스트 Client Component
 
 ```tsx
 'use client'
-import { TableSkeleton } from '@/components/ui/skeletons'  // 공유 스켈레톤 컴포넌트
+import { TableSkeleton } from '@/components/ui/skeletons'  // 아래 "공유 스켈레톤" 참조
 
-export function ServerTableClient() {
-  const { data: servers, isLoading, error } = useServers()
+export function ResourceListClient() {
+  const { data: resources, isLoading, error } = useResources()
 
-  if (isLoading) return <TableSkeleton rows={6} cols={7} />  // 텍스트 "불러오는 중..." 금지
-  if (error) return <p className="text-destructive">서버 목록을 불러올 수 없습니다.</p>
-  if (!servers?.length) return <p className="text-muted-foreground">등록된 서버가 없습니다.</p>
+  if (isLoading) return <TableSkeleton rows={6} cols={5} />  // 텍스트 "불러오는 중..." 금지
+  if (error) return <p className="text-destructive">목록을 불러올 수 없습니다.</p>
+  if (!resources?.length) return <p className="text-muted-foreground">등록된 항목이 없습니다.</p>
 
   return <table>...</table>
 }
 ```
 
-> 클라이언트 `isLoading`(RQ 캐시 없음) vs 라우트 레벨 `loading.tsx`(prefetch 대기) 역할 구분 → `nextjs-guide`.
+로딩·에러·빈 목록 **세 갈래를 각각 처리**한다(원칙 → `design-system`).
+
+> 클라이언트 `isLoading`(캐시 없음) vs 라우트 레벨 `loading.tsx`(prefetch 대기) 역할 구분 → `nextjs-guide`.
 
 ### 공유 스켈레톤 컴포넌트
 
-로딩 UI는 화면마다 새로 만들지 말고 `components/ui/skeletons.tsx`의 공유 컴포넌트를 재사용한다. 라우트 레벨 로딩(`loading.tsx`)에서의 조합·배치는 → `nextjs-guide`.
+shadcn이 제공하는 것은 프리미티브 `<Skeleton />` 하나뿐이다. 화면마다 스켈레톤을 새로 조립하지 말고, **프로젝트에서 조합 컴포넌트를 한 번 만들어** 재사용한다.
 
 ```
-src/components/ui/skeletons.tsx  ← 공유 스켈레톤 컴포넌트
+src/components/ui/skeletons.tsx   ← 프로젝트가 직접 만드는 조합 레이어
 ```
 
 | 컴포넌트 | 용도 |
 |---------|------|
 | `<TableSkeleton rows cols />` | 테이블 리스트 (rows/cols 조절) |
-| `<CardGridSkeleton />` | 대시보드 통계 카드 4개 그리드 |
+| `<CardGridSkeleton count />` | 통계/요약 카드 그리드 |
 | `<PageHeaderSkeleton />` | 페이지 제목 + 설명 영역 |
 
-> 로딩 분기에서 "불러오는 중..." 텍스트는 금지 → 위 스켈레톤 컴포넌트 사용.
+- 스켈레톤은 **최종 콘텐츠의 레이아웃 형태를 유지**해야 한다(→ `design-system`). 형태가 다르면 로드 후 레이아웃 점프가 난다.
+- 라우트 레벨 로딩(`loading.tsx`)에서의 조합·배치는 → `nextjs-guide`.
+- 로딩 분기에서 "불러오는 중..." 텍스트는 금지.
