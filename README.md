@@ -1,4 +1,4 @@
-# claude-arch-kit — 아키텍처 리뷰 에이전트·스킬 마켓플레이스
+# claude-devkits — 개발 스택별 에이전트·스킬 마켓플레이스
 
 여러 프로젝트가 공통으로 재사용하는 **아키텍처/품질 리뷰 지식**을 에이전트·스킬로 모아둔 **Claude Code 플러그인 마켓플레이스**입니다.
 
@@ -9,18 +9,18 @@
 ## 설치
 
 ```bash
-claude plugin marketplace add artiveloper/claude-arch-kit
+claude plugin marketplace add artiveloper/claude-devkits
 
 # 필요한 킷만 설치 (기본 스코프: user → 모든 프로젝트에서 사용 가능)
 # 원칙 킷 — 스택 불문, 계층별
-claude plugin install common-kit@claude-arch-kit      # 시스템 아키텍처 (모든 프로젝트)
-claude plugin install backend-kit@claude-arch-kit     # 백엔드·DB·QA 원칙
-claude plugin install frontend-kit@claude-arch-kit    # 프론트엔드·디자인 시스템·QA 원칙
+claude plugin install common-kit@claude-devkits      # 시스템 아키텍처 (모든 프로젝트)
+claude plugin install backend-kit@claude-devkits     # 백엔드·DB·QA 원칙
+claude plugin install frontend-kit@claude-devkits    # 프론트엔드·디자인 시스템·QA 원칙
 
 # 기술 킷 — 해당 스택을 쓰는 프로젝트만
-claude plugin install python-kit@claude-arch-kit      # Python 클린코드
-claude plugin install nextjs-kit@claude-arch-kit      # Next.js·React Query·shadcn/Base UI
-claude plugin install supabase-kit@claude-arch-kit    # Supabase 인증·RLS·키 관리
+claude plugin install python-kit@claude-devkits      # Python 클린코드
+claude plugin install nextjs-kit@claude-devkits      # Next.js·React Query·shadcn/Base UI
+claude plugin install supabase-kit@claude-devkits    # Supabase 인증·RLS·키 관리
 ```
 
 user 스코프로 설치하면 **프로젝트마다 설정 파일을 둘 필요가 없습니다.** 특정 프로젝트에만 적용하려면 `--scope project`(팀 공유용 `.claude/settings.json`에 기록)를 씁니다.
@@ -30,9 +30,9 @@ user 스코프로 설치하면 **프로젝트마다 설정 파일을 둘 필요�
 ```json
 {
   "extraKnownMarketplaces": {
-    "claude-arch-kit": { "source": { "source": "github", "repo": "artiveloper/claude-arch-kit" } }
+    "claude-devkits": { "source": { "source": "github", "repo": "artiveloper/claude-devkits" } }
   },
-  "enabledPlugins": { "backend-kit@claude-arch-kit": true }
+  "enabledPlugins": { "backend-kit@claude-devkits": true }
 }
 ```
 
@@ -43,7 +43,7 @@ user 스코프로 설치하면 **프로젝트마다 설정 파일을 둘 필요�
 마켓플레이스는 기본적으로 하루 1회 자동 갱신됩니다(`pluginAutoUpdateSettings.checkFrequencyMinutes`, 기본 1440). 즉시 반영하려면:
 
 ```
-/plugin marketplace update claude-arch-kit
+/plugin marketplace update claude-devkits
 /reload-plugins
 ```
 
@@ -62,7 +62,7 @@ user 스코프로 설치하면 **프로젝트마다 설정 파일을 둘 필요�
 plugins/
 ├─ common-kit/
 │  ├─ .claude-plugin/plugin.json
-│  ├─ agents/   architect.md
+│  ├─ agents/   system-architect.md
 │  └─ skills/   system-architecture/
 ├─ backend-kit/                       ← 원칙 (스택 불문)
 │  ├─ .claude-plugin/plugin.json
@@ -70,7 +70,7 @@ plugins/
 │  └─ skills/   backend-architecture/, db-architecture/, qa-backend-strategy/
 ├─ frontend-kit/                      ← 원칙 (프레임워크 불문)
 │  ├─ .claude-plugin/plugin.json
-│  ├─ agents/   design-system.md, frontend-architect.md, qa-frontend.md
+│  ├─ agents/   design-reviewer.md, frontend-architect.md, qa-frontend.md
 │  └─ skills/   design-system/, frontend-architecture/, qa-frontend-strategy/
 ├─ python-kit/                        ← 기술 (Python)
 │  └─ skills/   python-guide/
@@ -82,18 +82,24 @@ plugins/
 
 > `agents/`·`skills/`는 반드시 **플러그인 루트**에 둡니다. `.claude-plugin/` 안에는 `plugin.json`만 들어갑니다 — 가장 흔한 실수입니다.
 
+각 킷에는 추가로 두 가지가 있습니다:
+- `evals/` — 스킬 **발동/비발동 회귀 테스트** (`claude plugin eval` 형식, early access). 케이스마다 실제 사용자 프롬프트와 grader가 있다.
+- 긴 기술 스킬의 `references/` — 조건부 상세(마이그레이션 절차 등)를 분리해, 트리거 후 로드 비용을 줄인다. 예: `supabase-guide/references/key-migration.md`, `shadcn-ui/references/radix-migration.md`
+
 ### 상시 토큰 비용
 
 설치한 킷의 스킬·에이전트 **설명(description)** 만 항상 로드되고, 본문은 실제로 발동할 때 로드됩니다.
 
 | 킷 | 성격 | 상시 | 구성 |
 |----|------|------|------|
-| `common-kit` | 원칙 | ~218 tok | 에이전트 1 + 스킬 1 |
-| `backend-kit` | 원칙 | ~576 tok | 에이전트 3 + 스킬 3 |
-| `frontend-kit` | 원칙 | ~571 tok | 에이전트 3 + 스킬 3 |
-| `python-kit` | 기술 | ~301 tok | 스킬 1 |
-| `nextjs-kit` | 기술 | ~710 tok | 스킬 3 |
-| `supabase-kit` | 기술 | ~247 tok | 스킬 1 |
+| `common-kit` | 원칙 | ~280 tok | 에이전트 1 + 스킬 1 |
+| `backend-kit` | 원칙 | ~690 tok | 에이전트 3 + 스킬 3 |
+| `frontend-kit` | 원칙 | ~655 tok | 에이전트 3 + 스킬 3 |
+| `python-kit` | 기술 | ~240 tok | 스킬 1 |
+| `nextjs-kit` | 기술 | ~760 tok | 스킬 3 |
+| `supabase-kit` | 기술 | ~275 tok | 스킬 1 |
+
+*0.2.0에서 description에 "다루지 않는 것" 경계를 추가해 원칙 킷 수치가 소폭 늘었다 — 스킬 간 트리거 충돌을 줄이기 위한 의도적 비용이다.*
 
 `claude plugin details <이름>` 으로 언제든 확인할 수 있습니다.
 
@@ -103,7 +109,7 @@ plugins/
 
 | 에이전트 | 스킬 | 담당 |
 |----------|------|------|
-| `architect` | `system-architecture` | 요구사항(FR/NFR) 구조화, 규모별 기술 스택 선정 규율, KISS·확장 지점, 도메인 간 경계 조율 |
+| `system-architect` | `system-architecture` | 요구사항(FR/NFR) 구조화, 규모별 기술 스택 선정 규율, KISS·확장 지점, 도메인 간 경계 조율 |
 
 ### `backend-kit` — 백엔드
 
@@ -119,7 +125,7 @@ plugins/
 |----------|------|------|
 | `frontend-architect` | `frontend-architecture` | 상태 분류, 컴포넌트 경계, 데이터 fetching, 낙관적 업데이트 롤백, 에러 경계, 폼 검증 이중화 |
 | `qa-frontend` | `qa-frontend-strategy` | 행동 기반 컴포넌트 테스트, E2E 우선순위, 안정적 셀렉터 |
-| `design-system` | `design-system` | 디자인 토큰, 컴포넌트 재사용, 반응형/모바일 퍼스트, 접근성, 로딩·빈·에러 상태 |
+| `design-reviewer` | `design-system` | 디자인 토큰, 컴포넌트 재사용, 반응형/모바일 퍼스트, 접근성, 로딩·빈·에러 상태 |
 
 각 원칙 스킬 하단에는 `## 리뷰 시 체크 우선순위`가 있어, 리뷰 결과가 호출마다 흔들리지 않도록 판단 순서를 고정한다.
 
@@ -147,9 +153,12 @@ plugins/
 ## 스킬·에이전트 추가하기
 
 1. 해당 킷의 `plugins/<킷>/skills/<이름>/SKILL.md` (또는 `agents/<이름>.md`)를 추가한다.
-2. `claude plugin validate ./plugins/<킷>` 으로 검증한다. (version 경고는 정상)
-3. 로컬에서 동작을 확인한다.
+   - description은 **[무엇을] + [언제 사용] + [무엇은 다루지 않는지(경계)]** 3요소로 쓴다. 상세 작성 규칙은 `docs/agent-skill-best-practices.md` 참조.
+   - 운영하며 발견한 함정은 해당 스킬의 **Gotchas 섹션**에 축적한다.
+2. `claude plugin validate ./plugins/<킷>` 으로 검증한다.
+3. `evals/`에 발동/비발동 케이스를 추가하고, 로컬에서 동작을 확인한다.
    ```bash
    claude --plugin-dir ./plugins/<킷>
+   claude plugin eval ./plugins/<킷>   # early access 활성화 시
    ```
-4. 커밋 & push → 설치된 모든 프로젝트에 전파.
+4. `plugin.json`의 `version`을 올리고 커밋 & push → 설치된 모든 프로젝트에 전파. (version을 안 올리면 업데이트가 전파되지 않는다)

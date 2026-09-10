@@ -1,12 +1,11 @@
 ---
 name: python-guide
 description: >
-  범용 Python 클린코드 실무 가이드 (프레임워크 무관).
-  프로젝트 구조(src layout), 타입 힌트(mypy/pyright), 패키징(uv/poetry, pyproject.toml),
-  린팅/포매팅(ruff), 테스트(pytest, fixture, mock 경계), 예외 계층 설계, asyncio 기본 패턴 포함.
-  Python, 파이썬, type hint, 타입 힌트, pyproject.toml, ruff, mypy, pytest, asyncio,
-  가상환경, venv 관련 작업이나 코드 리뷰 시 참조. FastAPI/Django 등 프레임워크 전용 스킬이
-  별도로 있으면 그쪽을 우선 참조하고, 이 스킬은 언어 차원의 공통 기반으로 사용.
+  범용 Python 클린코드 실무 가이드 (프레임워크 무관) — src layout, 타입 힌트(mypy/pyright),
+  uv·pyproject.toml 패키징, ruff, pytest·mock 경계, 예외 계층, asyncio 패턴.
+  Python, 파이썬, type hint, pyproject.toml, ruff, mypy, pytest, asyncio, venv 관련 작업이나 코드 리뷰 시 사용.
+  백엔드 구조 원칙(계층·트랜잭션 → backend-architecture)은 다루지 않으며, FastAPI/Django 등
+  프레임워크 전용 스킬이 별도로 있으면 그쪽을 우선한다.
 ---
 
 # Python 클린코드 가이드
@@ -211,3 +210,14 @@ async def wrap_blocking():
 ### 에러/비동기
 - [ ] 도메인별 예외 계층 존재, 광범위한 `except Exception: pass` 없음
 - [ ] async 함수 내 블로킹 호출 없음, 독립적 await는 `gather`로 병렬화
+
+
+---
+
+## 9. Gotchas (운영하며 축적)
+
+- `asyncio.gather`는 기본값(`return_exceptions=False`)에서 첫 예외로 gather 자체는 실패하지만 **나머지 태스크는 취소되지 않고 계속 실행**된다 — 실패 시 일괄 정리가 필요하면 `asyncio.TaskGroup`(3.11+)을 쓴다.
+- pydantic v2는 v1과 API가 다르다(`.dict()` → `.model_dump()`, `Config` → `model_config`) — 생성 코드에 v1 패턴이 섞여 나오기 쉬우니 리뷰에서 걸러낸다.
+- `uv run`은 실행 전에 락파일 기준으로 환경을 자동 동기화한다 — CI에서 별도 `uv sync` 단계 없이도 재현된다.
+
+> 운영 중 새로 발견한 함정은 이 섹션에 계속 축적한다.

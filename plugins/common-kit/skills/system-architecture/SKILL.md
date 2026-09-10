@@ -1,6 +1,6 @@
 ---
 name: system-architecture
-description: 시스템(상위) 아키텍처 공통 원칙(요구사항 FR/NFR 구조화, 기술 스택 선정 규율, KISS/확장 지점, 도메인 간 경계). 스택 불문. 상위 설계나 리뷰 요청 시 반드시 사용.
+description: 시스템(상위) 아키텍처 공통 원칙 — 요구사항 FR/NFR 구조화, 기술 스택 선정 규율, KISS/확장 지점, 도메인 간 경계 조율. 스택 불문. 상위 설계, 스택 선정, 요구사항 정리, 설계 리뷰 요청 시 사용. 도메인 세부(백엔드 계층·DB 스키마·프론트 상태)는 다루지 않는다 — backend-architecture/db-architecture/frontend-architecture 소관.
 ---
 
 # System Architecture
@@ -30,7 +30,7 @@ description: 시스템(상위) 아키텍처 공통 원칙(요구사항 FR/NFR �
 
 ## 보안·횡단 관심사를 설계 단계에 포함
 
-- 인증/인가 모델, 입력 신뢰 경계, 비밀·환경변수 관리, CORS 등 횡단 관심사는 구현이 아니라 설계 단계에서 결정한다(세부는 `backend-architecture` 스킬).
+- 인증/인가 모델, 입력 신뢰 경계, 비밀·환경변수 관리, CORS 등 횡단 관심사는 구현이 아니라 설계 단계에서 결정한다(세부는 backend-kit의 `backend-architecture` 스킬 — 설치 시에만 참조).
 - 데이터 경계(어떤 데이터가 어디에 저장·전송되는지)와 민감 데이터 취급을 초기에 정의한다.
 
 ## 도메인 설계 위임

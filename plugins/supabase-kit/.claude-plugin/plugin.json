@@ -1,8 +1,9 @@
 {
   "name": "supabase-kit",
+  "version": "0.3.0",
   "displayName": "Supabase Kit — 인증·RLS·키 관리",
   "description": "Supabase 실무 가이드. @supabase/ssr 클라이언트 설정, getUser vs getSession, RLS 정책·성능, publishable/secret 신규 API 키, 타입 생성, 마이그레이션. 인증·미들웨어 예시는 Next.js App Router 기준.",
   "author": { "name": "artiveloper", "email": "artiveloper@gmail.com" },
-  "repository": "https://github.com/artiveloper/claude-arch-kit",
+  "repository": "https://github.com/artiveloper/claude-devkits",
   "keywords": ["supabase", "rls", "auth", "postgres", "nextjs"]
 }

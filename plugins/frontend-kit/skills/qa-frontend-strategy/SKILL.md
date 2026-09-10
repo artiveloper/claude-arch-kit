@@ -1,6 +1,6 @@
 ---
 name: qa-frontend-strategy
-description: 프론트엔드 테스트 전략 공통 원칙(컴포넌트 테스트, E2E 우선순위, 사용자 행동 기반 검증). 프론트 테스트 전략 수립/리뷰 시 반드시 사용.
+description: 프론트엔드 테스트 전략 공통 원칙 — 행동 기반 검증, 컴포넌트 테스트, E2E 우선순위, 스냅샷 남용 경계. 프론트 테스트 전략 수립·리뷰, 테스트 갭 분석 요청 시 사용. 백엔드 테스트(qa-backend-strategy)와 시각적 일관성 판단(design-system)은 다루지 않는다.
 ---
 
 # QA Frontend Strategy

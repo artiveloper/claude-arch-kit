@@ -1,12 +1,11 @@
 ---
 name: supabase-guide
 description: >
-  Next.js + Supabase 실무 가이드.
-  Supabase, SSR 인증, @supabase/ssr, RLS, Row Level Security, 타입 생성,
-  publishable key, secret key, API 키 마이그레이션, middleware, DB 마이그레이션 관련 작업 시 참조.
-  클라이언트 설정, 인증 패턴(getUser vs getSession), RLS 성능 최적화, 보안 규칙 포함.
-  레거시 anon/service_role 키 대신 신규 publishable/secret 키 사용 원칙 포함.
-  admin role(app_metadata) 기반 권한 분기, 소유자 기반 RLS 패턴 포함.
+  Next.js + Supabase 실무 가이드 — @supabase/ssr 클라이언트 3종(browser/server/admin),
+  인증(getUser vs getSession, app_metadata role, middleware 토큰 갱신), RLS 정책·성능,
+  publishable/secret 신규 API 키, 타입 생성, 마이그레이션.
+  Supabase, RLS, Row Level Security, @supabase/ssr, publishable key, secret key, middleware 관련 작업 시 사용.
+  DBMS 불문 스키마 원칙(db-architecture)과 React Query 캐싱(react-query-guide)은 다루지 않는다.
 ---
 
 # Supabase 가이드
@@ -182,38 +181,15 @@ export const config = {
 > 원칙: **레거시 `anon` / `service_role` (JWT) 키는 사용하지 않는다.**
 > 항상 신규 **Publishable / Secret** 키를 사용한다.
 
-### 레거시 키 vs 신규 키
+### 레거시 키 마이그레이션 → `references/key-migration.md`
 
-| 구분 | 레거시 — 사용 금지 | 신규 — 사용 |
-|------|------------------|-------------|
-| 공개용 | `anon` (JWT, `eyJ...`) | **Publishable** (`sb_publishable_...`) |
-| 서버용 | `service_role` (JWT, `eyJ...`) | **Secret** (`sb_secret_...`) |
-| 형식 | JWT — 디코딩 시 project ref/exp 등 노출 | 불투명 문자열 |
-| 개별 폐기 | 불가 (JWT secret 교체 = 전체 키 동시 무효화) | 가능 (키 단위 생성/삭제) |
-| 다중 발급 | 불가 (각각 1개 고정) | Secret 키 다중 발급 (서비스/환경별 분리) |
-| 유출 대응 | 전체 롤오버 필요 → 전 서비스 다운타임 | 해당 키만 삭제 후 재발급 |
-| 상태 | **deprecated 예정** (폐기 일정은 Supabase 공지 확인) | 표준 |
-
-- 레거시 키는 대시보드에서 명시적으로 disable 하기 전까지 계속 동작한다 → 마이그레이션 기간 동안 병행 가능.
-- 신규 키를 발급해도 레거시 키는 자동 폐기되지 않는다. 교체 완료 후 **직접 disable** 해야 한다.
+레거시 `anon`/`service_role`(JWT) 키에서 신규 키로 교체할 때만 읽는다 — 키 비교표, 발급/교체 5단계 절차, 유출 대응 포함. 신규 프로젝트는 처음부터 Publishable/Secret 키만 쓰면 되므로 읽을 필요 없다.
 
 ### `anon` 키 vs `anon` 역할 — 혼동 주의
 
 - **`anon` 키**(레거시 API 키) → 폐기 대상. `sb_publishable_...` 로 교체.
 - **`anon` 역할**(Postgres role) → 그대로 존재. Publishable 키로 접근하되 로그인 세션이 없으면 여전히 `anon` 역할로 매핑된다.
 - 따라서 키를 교체해도 RLS 정책의 `TO authenticated` / `TO anon` 구분은 그대로 유지된다.
-
-### 발급 / 교체 절차
-
-1. Dashboard → Project Settings → **API Keys** 탭에서 Publishable / Secret 키 생성
-2. 클라이언트(브라우저·SSR)에는 Publishable 키만 주입
-3. 서버 전용 경로(Server Action / Route Handler / Edge Function)에만 Secret 키 주입
-4. 전 환경(local / staging / production, CI Secrets, Vercel 환경변수)에서 레거시 키 참조 제거
-   — **변수명까지 함께 교체한다.** `SUPABASE_SERVICE_ROLE_KEY` 가 남아 있으면 언젠가 레거시 키가 다시 주입된다.
-5. 레거시 키 사용량 0 확인 후 대시보드에서 legacy keys **disable**
-
-> Secret 키 삭제는 되돌릴 수 없다. 삭제 전 대체 키로 배포가 완료됐는지 확인한다.
-> 유출 시에는 재발급 → 배포 → 기존 키 삭제. 다른 Secret 키에는 영향이 없다.
 
 ### 환경변수
 
@@ -428,3 +404,14 @@ supabase gen types typescript --local > src/types/database.ts
 - [ ] 스키마 변경 시 타입 재생성
 - [ ] 미들웨어에서 `getUser()` 호출 (토큰 갱신)
 - [ ] Admin Client는 `@supabase/supabase-js`의 `createClient` 사용 (`@supabase/ssr` 아님)
+
+
+---
+
+## 8. Gotchas (운영하며 축적)
+
+- RLS의 여러 permissive 정책은 **OR로 결합**된다 — admin `FOR ALL` 정책이 있으면 소유자 정책을 아무리 좁혀도 admin은 항상 통과한다. 교집합(AND)이 필요하면 `AS RESTRICTIVE` 정책을 쓴다.
+- Server Component에서는 쿠키를 쓸 수 없어 `setAll`이 실패한다(server.ts의 try/catch가 그 이유) — 토큰 갱신은 전적으로 middleware 책임이다. middleware `matcher`에서 경로가 빠지면 그 경로의 세션이 조용히 만료된다.
+- `supabase gen types`가 생성하는 **뷰(view) 타입은 모든 컬럼이 nullable**이다 — 뷰 기반 조회는 non-null 보정(타입 가드/변환 함수)이 필요하다.
+
+> 운영 중 새로 발견한 함정은 이 섹션에 계속 축적한다.

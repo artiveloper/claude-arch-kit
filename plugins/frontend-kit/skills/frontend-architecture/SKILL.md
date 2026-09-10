@@ -1,6 +1,6 @@
 ---
 name: frontend-architecture
-description: 프론트엔드 아키텍처 공통 원칙(상태관리, 컴포넌트 경계, 데이터 fetching, 폴더 구조). 프레임워크 불문. 프론트 구조 설계나 리뷰 요청 시 반드시 사용.
+description: 프론트엔드 아키텍처 공통 원칙 — 상태 4분류(서버/URL/폼/전역), 컴포넌트 경계, 데이터 fetching, 에러 경계, 폼 검증 이중화, 폴더 구조. 프레임워크 불문. 프론트 구조 설계·리뷰 요청 시 사용. 시각적 일관성·토큰(design-system)과 Next.js/React Query 구현 세부(nextjs-kit 스킬들)는 다루지 않는다.
 ---
 
 # Frontend Architecture

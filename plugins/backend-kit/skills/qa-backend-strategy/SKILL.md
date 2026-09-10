@@ -1,6 +1,6 @@
 ---
 name: qa-backend-strategy
-description: 백엔드 테스트 전략 공통 원칙(테스트 피라미드, 경계면 검증, mock 기준, 동시성 테스트). 백엔드 테스트 전략 수립/리뷰 시 반드시 사용.
+description: 백엔드 테스트 전략 공통 원칙 — 테스트 피라미드, 경계면 검증(API 계약·트랜잭션 실패·동시성·권한), mock 기준. 백엔드 테스트 전략 수립·리뷰, 테스트 갭 분석 요청 시 사용. 프론트엔드 테스트(qa-frontend-strategy)와 특정 기술 종속 검증 항목은 다루지 않는다.
 ---
 
 # QA Backend Strategy

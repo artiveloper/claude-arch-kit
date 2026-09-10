@@ -1,18 +1,18 @@
 ---
 name: nextjs-guide
 description: >
-  Next.js App Router 메커니즘 가이드.
-  파일 컨벤션(page/layout/loading/error), Server vs Client Component 경계,
-  route group, 라우트 레벨 로딩(loading.tsx + Suspense 스트리밍), prefetch/HydrationBoundary 배치.
-  Next.js, App Router, Server Component, Client Component, 'use client', loading.tsx, Suspense,
-  route group, RSC, 스트리밍 관련 작업 시 참조.
+  Next.js App Router 메커니즘 가이드 — 파일 컨벤션(page/layout/loading/error), Server vs Client
+  Component 경계, route group, 라우트 레벨 로딩(loading.tsx + Suspense 스트리밍), prefetch/HydrationBoundary 배치.
+  Next.js, App Router, RSC, 'use client', loading.tsx, Suspense, 스트리밍 관련 작업 시 사용.
+  데이터 레이어 구현(react-query-guide)과 UI 스타일링(shadcn-ui)은 다루지 않는다.
 ---
 
 # Next.js — App Router 메커니즘
 
 > UI 스타일링(모바일 퍼스트·shadcn 컴포넌트·스켈레톤) → `shadcn-ui` 스킬 참조
 > 데이터 레이어(서버 상태 캐싱·prefetch·mutation) → `react-query-guide` 스킬 참조
-> 프레임워크 불문 구조 원칙(상태 분류·컴포넌트 경계) → `frontend-architecture` 스킬 참조 (frontend-kit — 설치돼 있지 않으면 이 참조는 건너뛴다)
+> 프레임워크 불문 구조 원칙(상태 분류·컴포넌트 경계) → `frontend-architecture` 스킬 참조.
+> **frontend-kit 미설치 시**: 이 문서에 나오는 `frontend-architecture`·`design-system` 참조는 전부 건너뛴다 — 없는 스킬을 찾거나 로드하려 하지 않는다.
 
 아래 예시의 도메인 이름(`resources` 등)은 자리표시자다 — 프로젝트의 실제 리소스명으로 바꿔 읽는다.
 
@@ -95,3 +95,15 @@ export default function ResourcesLoading() {
 ## 4. 데이터/캐시 경계 (요약)
 
 App Router에는 여러 캐시 레이어가 있다. 클라이언트 데이터 캐시 라이브러리를 쓴다면 **클라이언트 freshness의 단일 출처는 그 라이브러리**이고, Next.js fetch cache는 ISR/`revalidateTag` 용도이지 UI 상태 소스가 아니다. 상세 표·상태 소유권은 → `react-query-guide` 7·8절.
+
+
+---
+
+## Gotchas (운영하며 축적)
+
+- `'use client'`는 컴포넌트가 아니라 **모듈 경계 선언**이다 — 그 파일이 import하는 모든 모듈이 클라이언트 번들로 끌려간다. 경계 파일은 얇게 유지한다.
+- Server Component는 Client Component에 함수(이벤트 핸들러)를 props로 넘길 수 없다 — 직렬화 가능한 값만. 핸들러가 필요한 지점부터가 Client 경계다.
+- Next.js 15+에서 `params`/`searchParams`는 **Promise**다 — Server Component에서 `await` 없이 접근하면 안 된다.
+- `loading.tsx`는 세그먼트의 `page`만 감싼다 — layout은 유지된 채 콘텐츠 영역만 로딩 UI로 바뀐다. 전체 화면 로딩을 기대하면 어긋난다.
+
+> 운영 중 새로 발견한 함정은 이 섹션에 계속 축적한다.

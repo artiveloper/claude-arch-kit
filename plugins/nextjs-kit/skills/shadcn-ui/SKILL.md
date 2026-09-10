@@ -1,18 +1,19 @@
 ---
 name: shadcn-ui
 description: >
-  Tailwind/shadcn UI 구현 패턴 가이드. 프리미티브는 Base UI(@base-ui/react) 기준.
-  모바일 퍼스트 className 규칙, Base UI 합성(render prop)·data-* 상태 스타일링, shadcn Sidebar 레이아웃,
-  컴포넌트 패턴 — 액션 버튼(Button), 상태 Badge, 날짜·시간 포맷 중앙화, 리스트 Client Component, 공유 스켈레톤 컴포넌트.
-  Next.js App Router 메커니즘은 nextjs-guide, 데이터 레이어는 react-query-guide 참조.
-  Tailwind, shadcn, Base UI, render prop, className, Sidebar, Button, Badge, Skeleton, 반응형, UI 컴포넌트 작업 시 참조.
+  Tailwind/shadcn UI 구현 패턴 가이드 — 프리미티브는 Base UI(@base-ui/react) 기준.
+  모바일 퍼스트 className, Base UI 합성(render prop)·data-* 상태 스타일링, shadcn Sidebar 레이아웃,
+  액션 버튼·상태 Badge·날짜 포맷 중앙화·공유 스켈레톤.
+  Tailwind, shadcn, Base UI, render prop, Sidebar, Skeleton, 반응형, UI 컴포넌트 작업 시 사용.
+  App Router 메커니즘(nextjs-guide), 데이터 훅 정의(react-query-guide), 라이브러리 불문 원칙(design-system)은 다루지 않는다.
 ---
 
 # shadcn/Tailwind — UI 구현 패턴
 
 > Next.js App Router 메커니즘(Server/Client 경계·loading.tsx·route group) → `nextjs-guide` 스킬 참조
 > 데이터 레이어(React Query·query keys/options·prefetch·mutation·실시간 구독) → `react-query-guide` 스킬 참조
-> 라이브러리 불문 UI 원칙(모바일 퍼스트·터치 타겟·반응형·로딩/빈/에러 상태·상태 색상 일관성) → `design-system` 스킬 참조 (frontend-kit — 설치돼 있지 않으면 이 참조는 건너뛴다). 이 스킬은 그 원칙들의 **Tailwind/shadcn 구현**만 다룬다.
+> 라이브러리 불문 UI 원칙(모바일 퍼스트·터치 타겟·반응형·로딩/빈/에러 상태·상태 색상 일관성) → `design-system` 스킬 참조. 이 스킬은 그 원칙들의 **Tailwind/shadcn 구현**만 다룬다.
+> **frontend-kit 미설치 시**: 이 문서에 나오는 `design-system` 참조는 전부 건너뛴다 — 없는 스킬을 찾거나 로드하려 하지 않는다.
 
 **프리미티브 기준: Base UI(`@base-ui/react`).** shadcn/ui는 2026-07부터 Base UI가 기본 프리미티브다. 신규 컴포넌트·신규 코드는 Radix가 아니라 Base UI로 작성한다(§1).
 
@@ -184,25 +185,9 @@ Base UI는 `data-state="open"` 하나가 아니라 **상태별 개별 속성**�
 
 - 열림/닫힘 애니메이션은 keyframe 클래스(`animate-in`/`animate-out`)를 새로 만들지 말고 `transition` + `data-starting-style`/`data-ending-style` 조합으로 처리한다.
 
-### Radix → Base UI 대응표
+### Radix → Base UI 이관 → `references/radix-migration.md`
 
-| 영역 | Radix (레거시) | Base UI (기준) |
-|------|---------------|----------------|
-| 패키지 | `@radix-ui/react-*` 개별 설치 | `@base-ui/react` 단일 + 서브패스 import |
-| 합성 | `asChild` + `Slot` | `render` prop |
-| 합성 유틸 | `Slot` | `useRender` (`@base-ui/react/use-render`) |
-| 팝업 내용 | `*.Content` | `*.Positioner` + `*.Popup` |
-| 위치 prop | `Content`의 `side`/`align` | `Positioner`의 `side`/`align`/`sideOffset` |
-| 열림 상태 | `data-state="open"` | `data-open` / `data-closed` |
-| 애니메이션 | `data-[state=open]:animate-in` | `transition` + `data-starting-style` / `data-ending-style` |
-| 라벨 배치 | 팝업 내 자유 배치 | `Group` 내부에 중첩 |
-| 위치 계산 커스텀 | Radix 내부 로직 | Floating UI(`@floating-ui/react`) 직접 사용 |
-
-### 기존 Radix 코드 이관
-
-- Radix는 deprecated가 아니다 — **한 번에 갈아엎지 않고 컴포넌트 단위로 점진 이관**한다. 혼재 상태는 허용하되, 신규 코드는 항상 Base UI.
-- 이관은 `npx skills add shadcn/ui`(또는 `pnpm dlx`/`bunx`) 후 `migrate <component> to base-ui` 형태로 컴포넌트별 진행 → `.migration/<component>.md` 리포트에서 동작 차이를 확인하고 커밋을 분리한다.
-- 이관 후 확인 항목: `asChild` 잔존 여부, `data-[state=...]` 셀렉터 잔존 여부, `side`/`align`이 `Positioner`로 옮겨졌는지, 트리거로 넘긴 컴포넌트의 ref forward + props spread.
+기존 Radix 코드를 Base UI로 옮길 때만 읽는다 — 영역별 대응표(패키지/합성/Positioner/data-속성/애니메이션)와 컴포넌트 단위 점진 이관 절차·이관 후 확인 항목 포함.
 
 ### 금지 패턴
 
@@ -335,3 +320,14 @@ src/components/ui/skeletons.tsx   ← 프로젝트가 직접 만드는 조합 �
 - 스켈레톤은 **최종 콘텐츠의 레이아웃 형태를 유지**해야 한다(→ `design-system`). 형태가 다르면 로드 후 레이아웃 점프가 난다.
 - 라우트 레벨 로딩(`loading.tsx`)에서의 조합·배치는 → `nextjs-guide`.
 - 로딩 분기에서 "불러오는 중..." 텍스트는 금지.
+
+
+---
+
+## 3. Gotchas (운영하며 축적)
+
+- Tailwind 클래스는 **정적으로만 감지**된다 — `bg-${color}` 같은 동적 조합은 빌드에서 제거된다. 전체 클래스명을 매핑 객체로 나열한다(상태 Badge 패턴처럼).
+- `render` prop에 넘긴 커스텀 컴포넌트가 ref forward/props spread를 빠뜨리면 **에러 없이** 트리거·접근성만 조용히 죽는다 — 동작이 안 하면 이것부터 확인한다.
+- Portal로 뜨는 Popup은 DOM상 `body` 아래로 이동하므로 상위 컴포넌트의 상속 스타일(텍스트 색 등)을 받지 못할 수 있다 — 색·배경 토큰 클래스를 Popup에 직접 준다.
+
+> 운영 중 새로 발견한 함정은 이 섹션에 계속 축적한다.

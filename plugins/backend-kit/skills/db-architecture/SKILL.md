@@ -1,6 +1,6 @@
 ---
 name: db-architecture
-description: 데이터베이스 아키텍처 공통 원칙(정규화, 인덱스, 마이그레이션 안전성, 락/동시성). DBMS 불문. 스키마/쿼리 설계 리뷰 요청 시 반드시 사용.
+description: 데이터베이스 설계 공통 원칙 — 정규화 트레이드오프, 인덱스 전략, 마이그레이션 안전성(락·롤백), N+1/풀스캔/락 경합. DBMS 불문. 스키마·쿼리·마이그레이션 설계나 리뷰 요청 시 사용. 특정 기술 종속 규칙(Supabase RLS → supabase-guide 등)과 서비스 계층의 트랜잭션 코드 구조(backend-architecture)는 다루지 않는다.
 ---
 
 # DB Architecture

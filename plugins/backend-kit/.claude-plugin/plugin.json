@@ -1,8 +1,9 @@
 {
   "name": "backend-kit",
+  "version": "0.3.0",
   "displayName": "Backend Kit — 백엔드·DB·QA",
   "description": "백엔드 아키텍처(계층 분리, API 계약, 트랜잭션 경계), DB 설계(정규화·인덱스·마이그레이션), 백엔드 테스트 전략. 언어/프레임워크 불문 원칙만 — 언어별 컨벤션은 python-kit 등 기술 킷 참조.",
   "author": { "name": "artiveloper", "email": "artiveloper@gmail.com" },
-  "repository": "https://github.com/artiveloper/claude-arch-kit",
+  "repository": "https://github.com/artiveloper/claude-devkits",
   "keywords": ["backend", "database", "testing", "review"]
 }

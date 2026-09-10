@@ -1,6 +1,6 @@
 ---
 name: design-system
-description: UI 디자인 시스템 공통 원칙(디자인 토큰, 컴포넌트 재사용, 접근성). UI 일관성/디자인 시스템 리뷰 요청 시 반드시 사용.
+description: UI 디자인 시스템 공통 원칙 — 디자인 토큰, 컴포넌트 재사용, 모바일 퍼스트/터치 타겟, 로딩·빈·에러 상태, 상태 표현 일관성, 접근성(WCAG). 라이브러리 불문. UI 일관성·접근성 리뷰 요청 시 사용. Tailwind/shadcn 구현(shadcn-ui)과 상태관리·컴포넌트 구조(frontend-architecture)는 다루지 않는다.
 ---
 
 # Design System

@@ -1,18 +1,19 @@
 ---
 name: react-query-guide
 description: >
-  React Query 데이터 레이어 가이드.
-  도메인 디렉토리 구조, query keys/options/prefetch, useMutation + invalidateQueries/낙관적 업데이트,
-  Server Actions(ActionResult 봉투), 실시간 구독 + setQueryData, 캐시 레이어·상태 소유권 판단.
-  React Query, TanStack Query, query key, query options, prefetch, mutation, invalidate,
-  낙관적 업데이트, 실시간 구독, URL 상태/전역 상태 도구 선택, 신규 feature 데이터 레이어 추가 시 참조.
+  React Query 데이터 레이어 가이드 — 도메인 디렉토리 구조, query keys/options/prefetch,
+  useMutation + invalidate/낙관적 업데이트, Server Actions(ActionResult 봉투), 실시간 구독 흡수, 상태 소유권 판단.
+  React Query, TanStack Query, query key, prefetch, mutation, invalidate, 낙관적 업데이트,
+  URL 상태/전역 상태 도구 선택, 신규 feature 데이터 레이어 추가 시 사용.
+  UI 스타일링(shadcn-ui)과 라우팅·Server/Client 경계(nextjs-guide)는 다루지 않는다.
 ---
 
 # React Query — 데이터 레이어 패턴
 
 > UI/컴포넌트/Tailwind·shadcn 구현 → `shadcn-ui` 스킬 참조
 > Server/Client 경계·`loading.tsx`·route group → `nextjs-guide` 스킬 참조
-> 프레임워크 불문 원칙(상태 4분류·컴포넌트 경계·롤백 필수) → `frontend-architecture` 스킬 참조 (frontend-kit — 설치돼 있지 않으면 이 참조는 건너뛴다)
+> 프레임워크 불문 원칙(상태 4분류·컴포넌트 경계·롤백 필수) → `frontend-architecture` 스킬 참조.
+> **frontend-kit 미설치 시**: 이 문서에 나오는 `frontend-architecture` 참조는 전부 건너뛴다. `backend-architecture` 참조도 backend-kit 설치 시에만 유효하다 — 없는 스킬을 찾거나 로드하려 하지 않는다.
 
 **백엔드는 자리표시자다.** 아래 예시는 Server Action 안에서 `db`라는 데이터 접근 모듈을 호출한다 — Supabase·Prisma·REST 클라이언트 등 프로젝트가 쓰는 것으로 바꿔 읽는다. 도메인 이름(`resource`, `item`)도 마찬가지다.
 
@@ -340,3 +341,15 @@ export function useResourceRealtime(resourceId: string) {
 - **feature 단위로 전환하고, 전환이 끝난 feature부터 위 규칙을 예외 없이 적용한다.** 전환 중인 코드와 완료된 코드에 같은 잣대를 들이대면 리뷰가 마비된다 — 어느 feature가 전환 완료인지 프로젝트가 명시적으로 기록한다.
 - 페이지만 있고 도메인 레이어가 없는 화면이 남아 있다면 그게 다음 전환 후보다.
 - 한 번에 전면 전환하지 않는다. 새로 추가되는 feature부터 이 패턴으로 쓰는 것이 가장 비용이 낮다.
+
+
+---
+
+## 11. Gotchas (운영하며 축적)
+
+- prefetch한 데이터도 `staleTime`이 기본값(0)이면 **hydration 직후 즉시 리페치**된다 — prefetch 효과를 보려면 query options에 의미 있는 `staleTime`을 설정한다.
+- `invalidateQueries`는 기본이 **prefix 매칭**이다 — `queryKeys.all`을 무효화하면 list/detail 전부 무효화된다. 의도한 범위인지 확인한다.
+- Server Action은 병렬로 호출해도 **순차 실행**된다 — 다건 조회를 Server Action `queryFn`으로 병렬 요청하면 워터폴이 된다. 조회가 많으면 Route Handler 경로를 검토한다.
+- `mutateAsync`를 쓰면서 `onError` 콜백에만 의존하면 unhandled rejection이 난다 — `mutateAsync`는 호출부에서 try/catch 한다.
+
+> 운영 중 새로 발견한 함정은 이 섹션에 계속 축적한다.

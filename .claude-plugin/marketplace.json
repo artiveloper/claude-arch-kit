@@ -1,5 +1,5 @@
 {
-  "name": "claude-arch-kit",
+  "name": "claude-devkits",
   "description": "아키텍처·품질 리뷰 에이전트와 스킬 모음 (계층별 킷)",
   "owner": {
     "name": "artiveloper",
@@ -14,7 +14,7 @@
       "name": "common-kit",
       "source": "./plugins/common-kit",
       "displayName": "Common Kit — 시스템 아키텍처",
-      "description": "요구사항(FR/NFR) 구조화, 규모별 기술 스택 선정, 도메인 간 경계 조율. architect 에이전트 + system-architecture 스킬.",
+      "description": "요구사항(FR/NFR) 구조화, 규모별 기술 스택 선정, 도메인 간 경계 조율. system-architect 에이전트 + system-architecture 스킬.",
       "category": "architecture",
       "tags": ["architecture", "system-design", "review"]
     },
