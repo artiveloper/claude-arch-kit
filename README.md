@@ -1,4 +1,4 @@
-# ai-guide — 아키텍처 리뷰 에이전트·스킬 마켓플레이스
+# claude-arch-kit — 아키텍처 리뷰 에이전트·스킬 마켓플레이스
 
 여러 프로젝트가 공통으로 재사용하는 **아키텍처/품질 리뷰 지식**을 에이전트·스킬로 모아둔 **Claude Code 플러그인 마켓플레이스**입니다.
 
@@ -9,12 +9,12 @@
 ## 설치
 
 ```bash
-claude plugin marketplace add artiveloper/ai-guide
+claude plugin marketplace add artiveloper/claude-arch-kit
 
 # 필요한 킷만 설치 (기본 스코프: user → 모든 프로젝트에서 사용 가능)
-claude plugin install common-kit@ai-guide
-claude plugin install backend-kit@ai-guide
-claude plugin install frontend-kit@ai-guide
+claude plugin install common-kit@claude-arch-kit
+claude plugin install backend-kit@claude-arch-kit
+claude plugin install frontend-kit@claude-arch-kit
 ```
 
 user 스코프로 설치하면 **프로젝트마다 설정 파일을 둘 필요가 없습니다.** 특정 프로젝트에만 적용하려면 `--scope project`(팀 공유용 `.claude/settings.json`에 기록)를 씁니다.
@@ -24,9 +24,9 @@ user 스코프로 설치하면 **프로젝트마다 설정 파일을 둘 필요�
 ```json
 {
   "extraKnownMarketplaces": {
-    "ai-guide": { "source": { "source": "github", "repo": "artiveloper/ai-guide" } }
+    "claude-arch-kit": { "source": { "source": "github", "repo": "artiveloper/claude-arch-kit" } }
   },
-  "enabledPlugins": { "backend-kit@ai-guide": true }
+  "enabledPlugins": { "backend-kit@claude-arch-kit": true }
 }
 ```
 
@@ -37,7 +37,7 @@ user 스코프로 설치하면 **프로젝트마다 설정 파일을 둘 필요�
 마켓플레이스는 기본적으로 하루 1회 자동 갱신됩니다(`pluginAutoUpdateSettings.checkFrequencyMinutes`, 기본 1440). 즉시 반영하려면:
 
 ```
-/plugin marketplace update ai-guide
+/plugin marketplace update claude-arch-kit
 /reload-plugins
 ```
 
