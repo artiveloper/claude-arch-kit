@@ -12,7 +12,7 @@ description: >
 
 > UI 스타일링(모바일 퍼스트·shadcn 컴포넌트·스켈레톤) → `shadcn-ui` 스킬 참조
 > 데이터 레이어(서버 상태 캐싱·prefetch·mutation) → `react-query-guide` 스킬 참조
-> 프레임워크 불문 구조 원칙(상태 분류·컴포넌트 경계) → `frontend-architecture` 스킬 참조
+> 프레임워크 불문 구조 원칙(상태 분류·컴포넌트 경계) → `frontend-architecture` 스킬 참조 (frontend-kit — 설치돼 있지 않으면 이 참조는 건너뛴다)
 
 아래 예시의 도메인 이름(`resources` 등)은 자리표시자다 — 프로젝트의 실제 리소스명으로 바꿔 읽는다.
 

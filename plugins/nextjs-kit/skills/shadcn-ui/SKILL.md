@@ -12,7 +12,7 @@ description: >
 
 > Next.js App Router 메커니즘(Server/Client 경계·loading.tsx·route group) → `nextjs-guide` 스킬 참조
 > 데이터 레이어(React Query·query keys/options·prefetch·mutation·실시간 구독) → `react-query-guide` 스킬 참조
-> 라이브러리 불문 UI 원칙(모바일 퍼스트·터치 타겟·반응형·로딩/빈/에러 상태·상태 색상 일관성) → `design-system` 스킬 참조. 이 스킬은 그 원칙들의 **Tailwind/shadcn 구현**만 다룬다.
+> 라이브러리 불문 UI 원칙(모바일 퍼스트·터치 타겟·반응형·로딩/빈/에러 상태·상태 색상 일관성) → `design-system` 스킬 참조 (frontend-kit — 설치돼 있지 않으면 이 참조는 건너뛴다). 이 스킬은 그 원칙들의 **Tailwind/shadcn 구현**만 다룬다.
 
 **프리미티브 기준: Base UI(`@base-ui/react`).** shadcn/ui는 2026-07부터 Base UI가 기본 프리미티브다. 신규 컴포넌트·신규 코드는 Radix가 아니라 Base UI로 작성한다(§1).
 

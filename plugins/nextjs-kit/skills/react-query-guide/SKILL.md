@@ -12,7 +12,7 @@ description: >
 
 > UI/컴포넌트/Tailwind·shadcn 구현 → `shadcn-ui` 스킬 참조
 > Server/Client 경계·`loading.tsx`·route group → `nextjs-guide` 스킬 참조
-> 프레임워크 불문 원칙(상태 4분류·컴포넌트 경계·롤백 필수) → `frontend-architecture` 스킬 참조
+> 프레임워크 불문 원칙(상태 4분류·컴포넌트 경계·롤백 필수) → `frontend-architecture` 스킬 참조 (frontend-kit — 설치돼 있지 않으면 이 참조는 건너뛴다)
 
 **백엔드는 자리표시자다.** 아래 예시는 Server Action 안에서 `db`라는 데이터 접근 모듈을 호출한다 — Supabase·Prisma·REST 클라이언트 등 프로젝트가 쓰는 것으로 바꿔 읽는다. 도메인 이름(`resource`, `item`)도 마찬가지다.
 

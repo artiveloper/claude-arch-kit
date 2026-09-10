@@ -12,10 +12,15 @@
 claude plugin marketplace add artiveloper/claude-arch-kit
 
 # 필요한 킷만 설치 (기본 스코프: user → 모든 프로젝트에서 사용 가능)
+# 원칙 킷 — 스택 불문, 계층별
 claude plugin install common-kit@claude-arch-kit      # 시스템 아키텍처 (모든 프로젝트)
-claude plugin install backend-kit@claude-arch-kit     # 백엔드·DB·QA (스택 불문)
-claude plugin install frontend-kit@claude-arch-kit    # 프론트엔드·디자인 시스템·QA
-claude plugin install supabase-kit@claude-arch-kit    # Supabase를 쓰는 프로젝트만
+claude plugin install backend-kit@claude-arch-kit     # 백엔드·DB·QA 원칙
+claude plugin install frontend-kit@claude-arch-kit    # 프론트엔드·디자인 시스템·QA 원칙
+
+# 기술 킷 — 해당 스택을 쓰는 프로젝트만
+claude plugin install python-kit@claude-arch-kit      # Python 클린코드
+claude plugin install nextjs-kit@claude-arch-kit      # Next.js·React Query·shadcn/Base UI
+claude plugin install supabase-kit@claude-arch-kit    # Supabase 인증·RLS·키 관리
 ```
 
 user 스코프로 설치하면 **프로젝트마다 설정 파일을 둘 필요가 없습니다.** 특정 프로젝트에만 적용하려면 `--scope project`(팀 공유용 `.claude/settings.json`에 기록)를 씁니다.
@@ -47,7 +52,7 @@ user 스코프로 설치하면 **프로젝트마다 설정 파일을 둘 필요�
 - **원칙 스킬은 스택 무관하게** 담는다. 언어·프레임워크에 종속된 규칙(예: Next.js App Router, Supabase 인증)은 원칙 스킬에 섞지 않고 별도 **기술 스킬**로 분리한다.
 - **에이전트는 얇게, 원칙은 스킬에** 둔다. 에이전트는 역할·판단 태도만 정의하고, 실제 판단 기준은 짝이 되는 스킬에서 로드한다.
 - **오케스트레이션은 프로젝트 몫이다.** 여러 에이전트를 순서대로 엮는 것과 프로젝트 특이사항은 각 프로젝트에서 구성한다. 이 저장소의 원본은 항상 범용성을 유지한다.
-- **킷은 계층별로 쪼갠다.** 파이썬 백엔드 프로젝트가 프론트엔드 스킬 6개를 상시 로드하지 않도록, `common`/`backend`/`frontend`를 별도 플러그인으로 분리한다. 특정 벤더에 묶인 스킬(`supabase-kit`)은 계층 킷 어디에도 넣지 않고 독립 킷으로 뺀다 — 그 기술을 쓰는 프로젝트만 설치한다.
+- **원칙 킷과 기술 킷을 분리한다.** 원칙 킷(`common`/`backend`/`frontend`)은 스택 불문 판단 기준만 담아 어떤 프로젝트든 설치할 수 있게 하고, 특정 언어·프레임워크·벤더에 묶인 스킬(`python-kit`/`nextjs-kit`/`supabase-kit`)은 독립 기술 킷으로 뺀다 — 그 스택을 쓰는 프로젝트만 설치한다. Node 백엔드에 Python 가이드가, Vue 프론트에 Next.js 가이드가 딸려오지 않는다.
 - **에이전트·스킬 본문에 배포 방법을 적지 않는다.** "이 파일을 복사해서 쓰라" 같은 안내는 플러그인 모델과 모순되고, 에이전트가 호출될 때마다 컨텍스트를 차지한다. 배포·확장 방법은 이 README에만 둔다.
 
 ## 저장소 구조
@@ -59,18 +64,19 @@ plugins/
 │  ├─ .claude-plugin/plugin.json
 │  ├─ agents/   architect.md
 │  └─ skills/   system-architecture/
-├─ backend-kit/
+├─ backend-kit/                       ← 원칙 (스택 불문)
 │  ├─ .claude-plugin/plugin.json
 │  ├─ agents/   backend-architect.md, dba-advisor.md, qa-backend.md
 │  └─ skills/   backend-architecture/, db-architecture/, qa-backend-strategy/
-│                python-guide/
-├─ frontend-kit/
+├─ frontend-kit/                      ← 원칙 (프레임워크 불문)
 │  ├─ .claude-plugin/plugin.json
 │  ├─ agents/   design-system.md, frontend-architect.md, qa-frontend.md
 │  └─ skills/   design-system/, frontend-architecture/, qa-frontend-strategy/
-│                nextjs-guide/, react-query-guide/, shadcn-ui/
-└─ supabase-kit/
-   ├─ .claude-plugin/plugin.json
+├─ python-kit/                        ← 기술 (Python)
+│  └─ skills/   python-guide/
+├─ nextjs-kit/                        ← 기술 (Next.js/React 스택)
+│  └─ skills/   nextjs-guide/, react-query-guide/, shadcn-ui/
+└─ supabase-kit/                      ← 기술 (Supabase)
    └─ skills/   supabase-guide/
 ```
 
@@ -80,12 +86,14 @@ plugins/
 
 설치한 킷의 스킬·에이전트 **설명(description)** 만 항상 로드되고, 본문은 실제로 발동할 때 로드됩니다.
 
-| 킷 | 상시 | 구성 |
-|----|------|------|
-| `common-kit` | ~218 tok | 에이전트 1 + 스킬 1 |
-| `backend-kit` | ~873 tok | 에이전트 3 + 스킬 4 |
-| `frontend-kit` | ~1,273 tok | 에이전트 3 + 스킬 6 |
-| `supabase-kit` | ~247 tok | 스킬 1 |
+| 킷 | 성격 | 상시 | 구성 |
+|----|------|------|------|
+| `common-kit` | 원칙 | ~218 tok | 에이전트 1 + 스킬 1 |
+| `backend-kit` | 원칙 | ~576 tok | 에이전트 3 + 스킬 3 |
+| `frontend-kit` | 원칙 | ~571 tok | 에이전트 3 + 스킬 3 |
+| `python-kit` | 기술 | ~301 tok | 스킬 1 |
+| `nextjs-kit` | 기술 | ~710 tok | 스킬 3 |
+| `supabase-kit` | 기술 | ~247 tok | 스킬 1 |
 
 `claude plugin details <이름>` 으로 언제든 확인할 수 있습니다.
 
@@ -121,11 +129,11 @@ plugins/
 
 | 스킬 | 킷 | 범위 |
 |------|----|------|
-| `python-guide` | `backend-kit` | 범용 Python 클린코드 — src layout, 타입 힌트(mypy/pyright), uv/poetry·pyproject.toml, ruff, pytest, 예외 계층, asyncio |
+| `python-guide` | `python-kit` | 범용 Python 클린코드 — src layout, 타입 힌트(mypy/pyright), uv/poetry·pyproject.toml, ruff, pytest, 예외 계층, asyncio |
 | `supabase-guide` | `supabase-kit` | Supabase SSR 인증(`@supabase/ssr`), RLS·성능, 타입 생성, 신규 publishable/secret 키 마이그레이션. 인증·미들웨어 예시는 Next.js App Router 기준 |
-| `nextjs-guide` | `frontend-kit` | App Router 메커니즘 — 파일 컨벤션, Server/Client Component 경계, route group, `loading.tsx`+Suspense 스트리밍 |
-| `react-query-guide` | `frontend-kit` | 데이터 레이어 — query keys/options/prefetch, mutation·invalidate·낙관적 업데이트, Server Actions, 실시간 구독, 상태 소유권. 백엔드 무관(데이터 접근 모듈은 자리표시자) |
-| `shadcn-ui` | `frontend-kit` | Tailwind/shadcn UI 구현 패턴. 프리미티브는 **Base UI(`@base-ui/react`)** 기준 — 합성(render prop), `data-*` 상태 스타일링, Sidebar 레이아웃 |
+| `nextjs-guide` | `nextjs-kit` | App Router 메커니즘 — 파일 컨벤션, Server/Client Component 경계, route group, `loading.tsx`+Suspense 스트리밍 |
+| `react-query-guide` | `nextjs-kit` | 데이터 레이어 — query keys/options/prefetch, mutation·invalidate·낙관적 업데이트, Server Actions, 실시간 구독, 상태 소유권. 백엔드 무관(데이터 접근 모듈은 자리표시자) |
+| `shadcn-ui` | `nextjs-kit` | Tailwind/shadcn UI 구현 패턴. 프리미티브는 **Base UI(`@base-ui/react`)** 기준 — 합성(render prop), `data-*` 상태 스타일링, Sidebar 레이아웃 |
 
 > 기술 스킬도 **특정 프로젝트에 종속되지 않는다.** 코드 예시는 중립적인 경로(`src/...`, `@/components/ui/*`)와 예시 도메인(`resources`, `catalog_items` 등)을 쓰므로, 프로젝트에 적용할 때 자기 경로·테이블명으로 바꿔 읽으면 된다.
 

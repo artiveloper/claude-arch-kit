@@ -1,0 +1,8 @@
+{
+  "name": "python-kit",
+  "displayName": "Python Kit — 클린코드·타입·테스트",
+  "description": "범용 Python 클린코드 가이드 (프레임워크 무관). src layout, 타입 힌트(mypy/pyright), uv/poetry·pyproject.toml, ruff, pytest·mock 경계, 예외 계층, asyncio 패턴.",
+  "author": { "name": "artiveloper", "email": "artiveloper@gmail.com" },
+  "repository": "https://github.com/artiveloper/claude-arch-kit",
+  "keywords": ["python", "mypy", "ruff", "pytest", "asyncio", "clean-code"]
+}
