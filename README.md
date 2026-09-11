@@ -21,6 +21,9 @@ claude plugin install frontend-kit@claude-devkits    # 프론트엔드·디자�
 claude plugin install python-kit@claude-devkits      # Python 클린코드
 claude plugin install nextjs-kit@claude-devkits      # Next.js·React Query·shadcn/Base UI
 claude plugin install supabase-kit@claude-devkits    # Supabase 인증·RLS·키 관리
+
+# 도구 킷 — 프로젝트 문서 스캐폴드 (스택 불문)
+claude plugin install project-docs-kit@claude-devkits # /init-project-docs 명령어
 ```
 
 user 스코프로 설치하면 **프로젝트마다 설정 파일을 둘 필요가 없습니다.** 특정 프로젝트에만 적용하려면 `--scope project`(팀 공유용 `.claude/settings.json`에 기록)를 씁니다.
@@ -76,8 +79,11 @@ plugins/
 │  └─ skills/   python-guide/
 ├─ nextjs-kit/                        ← 기술 (Next.js/React 스택)
 │  └─ skills/   nextjs-guide/, react-query-guide/, shadcn-ui/
-└─ supabase-kit/                      ← 기술 (Supabase)
-   └─ skills/   supabase-guide/
+├─ supabase-kit/                      ← 기술 (Supabase)
+│  └─ skills/   supabase-guide/
+└─ project-docs-kit/                  ← 도구 (문서 스캐폴드, 스택 불문)
+   ├─ commands/    init-project-docs.md
+   └─ templates/   project-docs/ (README·docs/product·status·runbook·onboarding·decisions)
 ```
 
 > `agents/`·`skills/`는 반드시 **플러그인 루트**에 둡니다. `.claude-plugin/` 안에는 `plugin.json`만 들어갑니다 — 가장 흔한 실수입니다.
@@ -98,6 +104,7 @@ plugins/
 | `python-kit` | 기술 | ~240 tok | 스킬 1 |
 | `nextjs-kit` | 기술 | ~760 tok | 스킬 3 |
 | `supabase-kit` | 기술 | ~275 tok | 스킬 1 |
+| `project-docs-kit` | 도구 | ~0 tok | 명령어 1 (슬래시 호출 시에만 로드) |
 
 *0.2.0에서 description에 "다루지 않는 것" 경계를 추가해 원칙 킷 수치가 소폭 늘었다 — 스킬 간 트리거 충돌을 줄이기 위한 의도적 비용이다.*
 

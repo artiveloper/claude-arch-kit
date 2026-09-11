@@ -1,0 +1,9 @@
+{
+  "name": "project-docs-kit",
+  "version": "0.1.0",
+  "displayName": "Project Docs Kit — 프로젝트 문서 스타터",
+  "description": "프로젝트 초기 관리 문서(제품 개요·현황·런북·온보딩·ADR) 템플릿을 한 번에 설치하는 /init-project-docs 명령어. 스택 불문 소규모 팀용 스캐폴드.",
+  "author": { "name": "artiveloper", "email": "artiveloper@gmail.com" },
+  "repository": "https://github.com/artiveloper/claude-devkits",
+  "keywords": ["docs", "scaffold", "onboarding", "runbook", "adr"]
+}

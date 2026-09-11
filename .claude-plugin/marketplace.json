@@ -57,6 +57,14 @@
       "description": "@supabase/ssr 클라이언트, getUser vs getSession, RLS 정책·성능, publishable/secret 신규 API 키, 타입 생성, 마이그레이션. 인증 예시는 Next.js App Router 기준.",
       "category": "backend",
       "tags": ["supabase", "rls", "auth", "postgres", "nextjs"]
+    },
+    {
+      "name": "project-docs-kit",
+      "source": "./plugins/project-docs-kit",
+      "displayName": "Project Docs Kit — 프로젝트 문서 스타터",
+      "description": "프로젝트 초기 관리 문서(제품 개요·현황·런북·온보딩·ADR) 템플릿을 /init-project-docs 명령어로 한 번에 설치. 스택 불문 소규모 팀용 스캐폴드.",
+      "category": "docs",
+      "tags": ["docs", "scaffold", "onboarding", "runbook", "adr"]
     }
   ]
 }
